@@ -1,47 +1,178 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { db } from "../services/db";
 
-export default function NewReferral() {
-
+function NewReferral() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [reason, setReason] = useState("");
 
-  function submit() {
-    localStorage.setItem("ref", JSON.stringify({
-      name,
+  const [patientName, setPatientName] = useState("");
+  const [age, setAge] = useState("");
+  const [referralReason, setReferralReason] = useState("");
+  const [urgency, setUrgency] = useState("");
+  const [hospital, setHospital] = useState("");
+
+  const handleSubmit = async () => {
+    if (
+      !patientName ||
+      !age ||
+      !referralReason ||
+      !urgency ||
+      !hospital
+    ) {
+      alert("Please complete all required fields");
+      return;
+    }
+
+    const referral = {
+      id: "UBZ-" + Date.now(),
+      patientName,
       age,
-      reason
-    }));
+      diagnosis: referralReason,
+      urgency,
+      hospital,
+      status: "Pending Sync" as const,
+      time: new Date().toLocaleString(),
+    };
+
+    await db.referrals.add(referral);
 
     navigate("/qr");
-  }
+  };
 
   return (
-    <div style={styles.container}>
+    <div className="referral-screen">
 
-      <h2>New Referral</h2>
+      {/* HEADER */}
+      <div className="new-referral-header">
 
-      <input
-        placeholder="Patient Name"
-        style={styles.input}
-        onChange={(e) => setName(e.target.value)}
-      />
+        <button
+          className="back-circle"
+          onClick={() => navigate("/dashboard")}
+        >
+          ←
+        </button>
 
-      <input
-        placeholder="Age"
-        style={styles.input}
-        onChange={(e) => setAge(e.target.value)}
-      />
+        <div>
+          <h2>New Referral</h2>
 
-      <textarea
-        placeholder="Reason"
-        style={styles.textarea}
-        onChange={(e) => setReason(e.target.value)}
-      />
+          <p>
+            Complete all required fields
+          </p>
 
-      <button style={styles.button} onClick={submit}>
+          <div className="offline-pill">
+            📡 Offline Mode
+          </div>
+        </div>
+
+      </div>
+
+      {/* INFO CARD */}
+      <div className="save-info-card">
+        This referral will be saved locally and synced when internet is available.
+      </div>
+
+      {/* FORM */}
+
+      <div className="form-group">
+        <label>Patient Full Name *</label>
+
+        <input
+          type="text"
+          placeholder="e.g. Uwimana Marie Claire"
+          value={patientName}
+          onChange={(e) =>
+            setPatientName(e.target.value)
+          }
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Age *</label>
+
+        <input
+          type="number"
+          placeholder="Enter patient age"
+          value={age}
+          onChange={(e) =>
+            setAge(e.target.value)
+          }
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Referral Reason *</label>
+
+        <textarea
+          placeholder="Describe the patient's condition and reason for referral..."
+          value={referralReason}
+          onChange={(e) =>
+            setReferralReason(e.target.value)
+          }
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Urgency Level *</label>
+
+        <select
+          value={urgency}
+          onChange={(e) =>
+            setUrgency(e.target.value)
+          }
+        >
+          <option value="">
+            Select urgency level
+          </option>
+
+          <option>
+            Routine
+          </option>
+
+          <option>
+            Urgent
+          </option>
+
+          <option>
+            Emergency
+          </option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label>Destination Hospital *</label>
+
+        <select
+          value={hospital}
+          onChange={(e) =>
+            setHospital(e.target.value)
+          }
+        >
+          <option value="">
+            Select Hospital
+          </option>
+
+          <option>
+            Kigali University Hospital
+          </option>
+
+          <option>
+            Kibagabaga Hospital
+          </option>
+
+          <option>
+            Masaka Hospital
+          </option>
+
+          <option>
+            Kanombe Hospital
+          </option>
+        </select>
+      </div>
+
+      <button
+        className="submit-referral-btn"
+        onClick={handleSubmit}
+      >
         Create Referral
       </button>
 
@@ -49,32 +180,4 @@ export default function NewReferral() {
   );
 }
 
-const styles: any = {
-  container: {
-    padding: 20
-  },
-  input: {
-    width: "100%",
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 10,
-    border: "1px solid #ddd"
-  },
-  textarea: {
-    width: "100%",
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 10,
-    border: "1px solid #ddd",
-    height: 80
-  },
-  button: {
-    width: "100%",
-    marginTop: 15,
-    padding: 12,
-    background: "#2DA8FF",
-    color: "white",
-    border: "none",
-    borderRadius: 10
-  }
-};
+export default NewReferral;

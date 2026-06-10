@@ -1,7 +1,28 @@
 import Dexie from "dexie";
 
-export const db = new Dexie("UbuzimaLink");
+export interface Referral {
+  id: string;
+  patientName: string;
+  age?: string;
+  gender?: string;
+  diagnosis: string;
+  hospital: string;
+  status: "Pending Sync" | "Synced" | "Failed";
+  time: string;
+}
 
-db.version(1).stores({
-  referrals: "++id,patientName,syncStatus"
-});
+class UbuzimaDB extends Dexie {
+  referrals: Dexie.Table<Referral, string>;
+
+  constructor() {
+    super("UbuzimaDB");
+
+    this.version(1).stores({
+      referrals: "id, status, hospital",
+    });
+
+    this.referrals = this.table("referrals");
+  }
+}
+
+export const db = new UbuzimaDB();
