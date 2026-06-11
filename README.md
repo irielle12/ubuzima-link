@@ -109,20 +109,6 @@ node server.js
 
 Healthcare Referral System Design:
 https://www.figma.com/make/RtGHkRPdWSGCfoWz7ftBaf/Healthcare-Referral-System-Design?p=f&t=6tE6tFtgMlkuKc3I-0
-
-### Application Screens
-
-Included in the screenshots folder:
-
-* Landing Page
-* Health Worker Login
-* Dashboard
-* New Referral
-* QR Code View
-* Referrals Page
-* Sync Page
-
-
 ## MVP Workflow
 
 1. Health worker logs in.
