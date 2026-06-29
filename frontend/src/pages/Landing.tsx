@@ -1,57 +1,100 @@
 import { useNavigate } from "react-router-dom";
+import {
+  Stethoscope,
+  Building2,
+  ShieldCheck,
+  ChevronRight,
+} from "lucide-react";
 
 function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="landing-screen">
+    <div className="landing-v2">
 
-      <div
-        className="landing-card worker"
-        onClick={() => navigate("/worker-login")}
-      >
-        <div className="landing-icon">🏥</div>
+      <div className="landing-container">
 
-        <h2>Health Worker</h2>
+        <div className="landing-header">
 
-        <p>
-          Mobile app for creating and tracking
-          patient referrals from health posts
-        </p>
+          <h1>Ubuzima-Link</h1>
 
-        <div className="landing-tags">
-          <span>Offline-First</span>
-          <span>QR Tokens</span>
-          <span>Auto-Sync</span>
+          <p>
+            Healthcare Referral Management System
+          </p>
+
         </div>
-      </div>
 
-      <div
-        className="landing-card hospital"
-        onClick={() => navigate("/hospital-login")}
-      >
-        <div className="landing-icon">🏥</div>
+        <div className="portal-list">
 
-        <h2>Hospital Staff</h2>
+          <button
+            className="portal-card"
+            onClick={() => navigate("/login")}
+          >
+            <div className="portal-icon">
+              <Stethoscope size={24} />
+            </div>
 
-        <p>
-          Dashboard for receiving, managing,
-          and responding to incoming referrals
-        </p>
+            <div className="portal-content">
+              <h3>Health Worker Portal</h3>
 
-        <div className="landing-tags">
-          <span>Live Dashboard</span>
-          <span>Status Updates</span>
-          <span>Feedback</span>
+              <p>
+                Create and manage patient referrals
+              </p>
+            </div>
+
+            <ChevronRight size={20} />
+          </button>
+
+          <button
+            className="portal-card"
+            onClick={() => navigate("/hospital-login")}
+          >
+            <div className="portal-icon">
+              <Building2 size={24} />
+            </div>
+
+            <div className="portal-content">
+              <h3>Hospital Staff Portal</h3>
+
+              <p>
+                Receive and process referrals
+              </p>
+            </div>
+
+            <ChevronRight size={20} />
+          </button>
+
+          <button
+            className="portal-card"
+            onClick={() => navigate("/login")}
+          >
+            <div className="portal-icon">
+              <ShieldCheck size={24} />
+            </div>
+
+            <div className="portal-content">
+              <h3>Administrator Portal</h3>
+
+              <p>
+                Manage users, facilities and reports
+              </p>
+            </div>
+
+            <ChevronRight size={20} />
+          </button>
+
         </div>
-      </div>
 
-      <div className="security-row">
-        <span>AES-256 Encrypted</span>
-        <span>Offline Capable</span>
-        <span>47 Hospitals</span>
-        <span>1200+ Workers</span>
-        <span>MOH Certified</span>
+        <div className="landing-footer">
+
+          <span>Offline First</span>
+
+          <span>Secure QR Transfer</span>
+
+          <span>Healthcare Ready</span>
+
+        </div>
+
       </div>
 
     </div>

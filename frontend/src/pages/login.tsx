@@ -1,153 +1,127 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
-  const [workerName, setWorkerName] = useState("");
-  const [workerId, setWorkerId] = useState("");
-  const [password, setPassword] = useState("");
-  const [healthPost, setHealthPost] = useState("");
-  
+  const [searchParams] = useSearchParams();
 
-  const handleLogin = () => {
-   if (
-  !workerName ||
-  !workerId ||
-  !password ||
-  !healthPost
-)
-  
-localStorage.setItem(
-  "worker",
-  JSON.stringify({
-    workerName,
-    workerId,
-    healthPost,
-  })
-);
+  const role =
+    searchParams.get("role") || "worker";
 
-    navigate("/dashboard");
+  const [workerId, setWorkerId] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const getTitle = () => {
+    switch (role) {
+      case "hospital":
+        return "Hospital Staff Login";
+
+      case "admin":
+        return "Administrator Login";
+
+      default:
+        return "Health Worker Login";
+    }
   };
+  const handleLogin = () => {
+  if (!workerId || !password) return;
 
-  return (
-    <div className="login-screen">
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      workerId,
+      role,
+    })
+  );
 
-      {/* TOP BAR */}
-      <div className="top-bar">
-        <span className="app-title">
-          Ubuzima-Link
-        </span>
+  navigate("/dashboard");
+}; 
+return (
+    <div className="login-v2">
 
-        <div className="offline-status">
-          OFFLINE
-        </div>
-      </div>
+      <div className="login-container-v2">
 
-      {/* LOGO SECTION */}
-      <div className="logo-section">
+        <div className="login-header-v2">
 
-        <div className="logo-box">
-          ⚡
-        </div>
+          <h1>Ubuzima-Link</h1>
 
-        <h3>
-          Health Worker Referral System
-        </h3>
+          <p>
+            Healthcare Referral
+            Management System
+          </p>
 
-      </div>
-
-      {/* LOGIN FORM */}
-      <div className="login-form">
-<label>Worker Name</label>
-
-<input
-  type="text"
-  placeholder="Enter your full name"
-  value={workerName}
-  onChange={(e) =>
-    setWorkerName(e.target.value)
-  }
-/>
-        <label>Worker ID</label>
-
-        <input
-          type="text"
-          placeholder="e.g. HW-12345"
-          value={workerId}
-          onChange={(e) =>
-            setWorkerId(e.target.value)
-          }
-        />
-
-        <label>Password</label>
-
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-        />
-
-        <label>Health Post</label>
-
-        <select
-          value={healthPost}
-          onChange={(e) =>
-            setHealthPost(e.target.value)
-          }
-        >
-          <option value="">
-            Select Health Post
-          </option>
-
-          <option>
-            Kimironko Health Post
-          </option>
-
-          <option>
-            Gikondo Health Post
-          </option>
-
-          <option>
-            Kacyiru Health Post
-          </option>
-
-          <option>
-            Kanombe Health Post
-          </option>
-
-          <option>
-            Nyamirambo Health Post
-          </option>
-        </select>
-
-        <button onClick={handleLogin}>
-          Login to Portal
-        </button>
-
-        <button
-          className="switch-role-btn"
-          onClick={() =>
-            navigate("/hospital-login")
-          }
-        >
-          Login as Hospital Staff
-        </button>
-
-      </div>
-
-      {/* FOOTER */}
-      <div className="login-footer">
-
-        <div className="security-badge">
-          SECURE MEDICAL ENVIRONMENT
         </div>
 
-        <p>
-          Need technical assistance? Contact Support
-        </p>
+        <div className="login-card-v2">
+
+          <h2>{getTitle()}</h2>
+
+          <p className="login-subtitle">
+            Sign in to continue
+          </p>
+
+          <label>
+            STAFF ID
+          </label>
+
+          <input
+            type="text"
+            autoComplete="off"
+            placeholder="Enter Staff ID"
+            value={workerId}
+            onChange={(e) =>
+              setWorkerId(
+                e.target.value
+              )
+            }
+          />
+
+          <label>
+            Password
+          </label>
+
+          <input
+            type="password"
+            placeholder="Enter Password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+          />
+
+          <button
+            className="login-btn-v2"
+            onClick={handleLogin}
+          >
+            Sign In
+          </button>
+
+        </div>
+
+        <div className="login-footer-v2">
+
+          <span>
+            Offline First
+          </span>
+
+          <span>
+            Secure Access
+          </span>
+
+          <span>
+            QR Enabled
+          </span>
+
+        </div>
 
       </div>
 

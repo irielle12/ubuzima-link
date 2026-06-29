@@ -1,69 +1,126 @@
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function HospitalLogin() {
   const navigate = useNavigate();
 
-  const [hospitalId, setHospitalId] = useState("");
-  const [password, setPassword] = useState("");
+  const [hospitalId, setHospitalId] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
 
   const handleLogin = () => {
-    navigate("/dashboard");
+
+    if (
+      !hospitalId ||
+      !password
+    )
+      return;
+
+    localStorage.setItem(
+      "hospitalUser",
+      JSON.stringify({
+        hospitalId,
+      })
+    );
+
+    navigate(
+      "/hospital-dashboard"
+    );
   };
 
   return (
-    <div className="login-screen">
+    <div className="login-v2">
 
-      <div className="top-bar">
-        <span className="app-title">
-          Ubuzima-Link
-        </span>
+      <div className="login-container-v2">
 
-        <div className="offline-status">
-          OFFLINE
+        <div className="login-header-v2">
+
+          <h1>
+            Ubuzima-Link
+          </h1>
+
+          <p>
+            Healthcare Referral
+            Management System
+          </p>
+
         </div>
+
+        <div className="login-card-v2">
+
+          <h2>
+            Hospital Staff Login
+          </h2>
+
+          <p className="login-subtitle">
+
+            Sign in to continue
+
+          </p>
+
+          <label>
+            HOSPITAL ID
+          </label>
+
+          <input
+            type="text"
+            placeholder="Enter Hospital ID"
+            value={hospitalId}
+            onChange={(e) =>
+              setHospitalId(
+                e.target.value
+              )
+            }
+          />
+
+          <label>
+            Password
+          </label>
+
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+          />
+
+          <button
+            className="login-btn-v2"
+            onClick={
+              handleLogin
+            }
+          >
+
+            Sign In
+
+          </button>
+
+        </div>
+
+        <div className="login-footer-v2">
+
+          <span>
+            Offline First
+          </span>
+
+          <span>
+            Secure Access
+          </span>
+
+          <span>
+            QR Enabled
+          </span>
+
+        </div>
+
       </div>
 
-      <div className="logo-section">
-        <div className="logo-box">🏥</div>
-        <h3>Hospital Staff Portal</h3>
-      </div>
-
-      <div className="login-form">
-
-        <label>Hospital ID</label>
-
-        <input
-          value={hospitalId}
-          onChange={(e) =>
-            setHospitalId(e.target.value)
-          }
-          placeholder="HSP-001"
-        />
-
-        <label>Password</label>
-
-        <input
-          type="password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-          placeholder="Enter password"
-        />
-
-        <button onClick={handleLogin}>
-          Login
-        </button>
-
-        <button
-          className="switch-role-btn"
-          onClick={() => navigate("/worker-login")}
-        >
-          Login as Health Worker
-        </button>
-
-      </div>
     </div>
   );
 }

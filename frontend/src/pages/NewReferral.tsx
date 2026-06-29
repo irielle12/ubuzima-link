@@ -5,123 +5,145 @@ import { db } from "../services/db";
 function NewReferral() {
   const navigate = useNavigate();
 
-  const [patientName, setPatientName] = useState("");
-  const [age, setAge] = useState("");
-  const [referralReason, setReferralReason] = useState("");
-  const [urgency, setUrgency] = useState("");
-  const [hospital, setHospital] = useState("");
+  const patient = JSON.parse(
+    localStorage.getItem(
+      "selectedPatient"
+    ) || "{}"
+  );
+
+  const [diagnosis, setDiagnosis] =
+    useState("");
+
+  const [urgency, setUrgency] =
+    useState("");
+
+  const [hospital, setHospital] =
+    useState("");
 
   const handleSubmit = async () => {
     if (
-      !patientName ||
-      !age ||
-      !referralReason ||
+      !diagnosis ||
       !urgency ||
       !hospital
     ) {
-      alert("Please complete all required fields");
+      alert("Complete all fields");
       return;
     }
 
-    const referral = {
-      id: "UBZ-" + Date.now(),
-      patientName,
-      age,
-      diagnosis: referralReason,
-      urgency,
-      hospital,
-      status: "Pending Sync" as const,
-      time: new Date().toLocaleString(),
-    };
+  const referral = {
+  id: "UBZ-" + Date.now(),
 
-    await db.referrals.add(referral);
+  patientId: patient.id,
 
-    navigate("/qr");
+  diagnosis,
+
+  urgency,
+
+  hospital,
+
+  workflowStatus: "Draft" as const,
+
+  syncStatus: "Pending" as const,
+
+  time:
+    new Date().toLocaleString(),
+};
+await db.referrals.add(referral);
+
+localStorage.setItem(
+  "currentReferral",
+  JSON.stringify(referral)
+);
+
+navigate("/referral-details");
   };
 
   return (
-    <div className="referral-screen">
+    <div className="patient-search-page">
 
-      {/* HEADER */}
-      <div className="new-referral-header">
+      <div className="patient-header">
 
         <button
-          className="back-circle"
-          onClick={() => navigate("/dashboard")}
+          className="back-btn-v2"
+          onClick={() =>
+            navigate("/patient-search")
+          }
         >
           ←
         </button>
 
         <div>
-          <h2>New Referral</h2>
+          <h1>Create Referral</h1>
 
           <p>
-            Complete all required fields
+            Referral information
           </p>
-
-          <div className="offline-pill">
-            📡 Offline Mode
-          </div>
         </div>
 
       </div>
 
-      {/* INFO CARD */}
-      <div className="save-info-card">
-        This referral will be saved locally and synced when internet is available.
+      {/* PATIENT CARD */}
+
+      <div className="login-card-v2">
+
+        <h3>
+          Patient Information
+        </h3>
+
+        <p>
+          <strong>Name:</strong>{" "}
+          {patient.fullName}
+        </p>
+
+        <p>
+          <strong>Gender:</strong>{" "}
+          {patient.gender}
+        </p>
+
+        <p>
+          <strong>Phone:</strong>{" "}
+          {patient.phoneNumber}
+        </p>
+
+        <p>
+          <strong>National ID:</strong>{" "}
+          {patient.nationalId}
+        </p>
+
       </div>
 
-      {/* FORM */}
+      <div
+        className="login-card-v2"
+        style={{ marginTop: "20px" }}
+      >
 
-      <div className="form-group">
-        <label>Patient Full Name *</label>
-
-        <input
-          type="text"
-          placeholder="e.g. Uwimana Marie Claire"
-          value={patientName}
-          onChange={(e) =>
-            setPatientName(e.target.value)
-          }
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Age *</label>
-
-        <input
-          type="number"
-          placeholder="Enter patient age"
-          value={age}
-          onChange={(e) =>
-            setAge(e.target.value)
-          }
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Referral Reason *</label>
+        <label>
+          Referral Reason
+        </label>
 
         <textarea
-          placeholder="Describe the patient's condition and reason for referral..."
-          value={referralReason}
+          value={diagnosis}
           onChange={(e) =>
-            setReferralReason(e.target.value)
+            setDiagnosis(
+              e.target.value
+            )
           }
         />
-      </div>
 
-      <div className="form-group">
-        <label>Urgency Level *</label>
+        <label>
+          Urgency
+        </label>
 
         <select
           value={urgency}
           onChange={(e) =>
-            setUrgency(e.target.value)
+            setUrgency(
+              e.target.value
+            )
           }
         >
           <option value="">
-            Select urgency level
+            Select Urgency
           </option>
 
           <option>
@@ -136,15 +158,17 @@ function NewReferral() {
             Emergency
           </option>
         </select>
-      </div>
 
-      <div className="form-group">
-        <label>Destination Hospital *</label>
+        <label>
+          Destination Hospital
+        </label>
 
         <select
           value={hospital}
           onChange={(e) =>
-            setHospital(e.target.value)
+            setHospital(
+              e.target.value
+            )
           }
         >
           <option value="">
@@ -167,14 +191,15 @@ function NewReferral() {
             Kanombe Hospital
           </option>
         </select>
-      </div>
 
-      <button
-        className="submit-referral-btn"
-        onClick={handleSubmit}
-      >
-        Create Referral
-      </button>
+        <button
+          className="login-btn-v2"
+          onClick={handleSubmit}
+        >
+          Create Referral
+        </button>
+
+      </div>
 
     </div>
   );

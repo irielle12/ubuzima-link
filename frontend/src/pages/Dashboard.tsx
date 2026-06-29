@@ -1,30 +1,39 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { db } from "../services/db";
+
+import {
+  Plus,
+  Wifi,
+  House,
+  FileText,
+  User,
+  Bell,
+} from "lucide-react";
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  const [worker, setWorker] = useState({
-    workerName: "Health Worker",
-    workerId: "",
-    healthPost: "",
-  });
+  const [pendingSync, setPendingSync] =
+    useState(0);
 
-  const [referrals, setReferrals] = useState<any[]>([]);
-  const [isOnline, setIsOnline] = useState(
-    navigator.onLine
-  );
+  const [pendingReview, setPendingReview] =
+    useState(0);
+
+  const [recentReferrals, setRecentReferrals] =
+    useState<any[]>([]);
+
+  const [notifications, setNotifications] =
+    useState(0);
+
+  const [isOnline, setIsOnline] =
+    useState(navigator.onLine);
 
   useEffect(() => {
-    const savedWorker =
-      localStorage.getItem("worker");
+    loadDashboardData();
+  }, []);
 
-    if (savedWorker) {
-      setWorker(JSON.parse(savedWorker));
-    }
-
-    loadReferrals();
+  useEffect(() => {
 
     const handleOnline = () =>
       setIsOnline(true);
@@ -43,6 +52,7 @@ function Dashboard() {
     );
 
     return () => {
+
       window.removeEventListener(
         "online",
         handleOnline
@@ -52,235 +62,265 @@ function Dashboard() {
         "offline",
         handleOffline
       );
+
     };
+
   }, []);
 
-  const loadReferrals = async () => {
-    const data =
+  const loadDashboardData = async () => {
+
+    const referrals =
       await db.referrals.toArray();
 
-    setReferrals(data.reverse());
+    setPendingSync(
+
+      referrals.filter(
+        (r) =>
+          r.workflowStatus ===
+          "Pending Sync"
+      ).length
+
+    );
+
+    setPendingReview(
+
+      referrals.filter(
+        (r) =>
+          r.workflowStatus ===
+          "Pending Hospital Review"
+      ).length
+
+    );
+
+    setRecentReferrals(
+      referrals.slice(-5).reverse()
+    );
+
+    setNotifications(
+
+      referrals.filter(
+        (r) =>
+          r.workflowStatus ===
+            "Outcome Recorded" &&
+          !r.feedbackViewed
+      ).length
+
+    );
+
   };
 
-  const totalReferrals =
-    referrals.length;
-
-  const pendingReferrals =
-    referrals.filter(
-      (r) =>
-        r.status === "Pending Sync"
-    ).length;
-
-  const syncedReferrals =
-    referrals.filter(
-      (r) =>
-        r.status === "Synced"
-    ).length;
-
-  const failedReferrals =
-    referrals.filter(
-      (r) =>
-        r.status === "Failed"
-    ).length;
-
   return (
-    <div className="home-screen">
+    <div className="dashboard-v2">
 
       {/* HEADER */}
-      <div className="home-header">
 
-        <div>
+      <header className="dashboard-header-v2">
 
-          <p className="worker-role">
-            Health Worker
-          </p>
+        <div className="dashboard-header-content">
 
-          <h1 className="worker-name">
-            {worker.workerName}
-          </h1>
+          <div>
 
-          <p className="worker-details">
-            {worker.healthPost} •{" "}
-            {worker.workerId}
-          </p>
-
-          <div className="offline-pill">
-            {isOnline
-              ? "🟢 Online"
-              : "📡 Offline Mode"}
-          </div>
-
-        </div>
-
-        <div className="notification-bell">
-          🔔
-          <span className="notification-dot"></span>
-        </div>
-
-      </div>
-
-      {/* STATS */}
-      <div className="stats-row">
-
-        <div className="stat-box total">
-          <h2>{totalReferrals}</h2>
-          <p>Total</p>
-        </div>
-
-        <div className="stat-box pending">
-          <h2>{pendingReferrals}</h2>
-          <p>Pending</p>
-        </div>
-
-        <div className="stat-box verified">
-          <h2>{syncedReferrals}</h2>
-          <p>Synced</p>
-        </div>
-
-        <div className="stat-box conflict">
-          <h2>{failedReferrals}</h2>
-          <p>Failed</p>
-        </div>
-
-      </div>
-
-      {/* SEARCH + NEW */}
-      <div className="search-new-row">
-
-        <div className="search-wrapper">
-
-          🔍
-
-          <input
-            className="home-search"
-            type="text"
-            placeholder="Search patients or referrals..."
-            style={{
-              width: "240px",
-            }}
-          />
-
-        </div>
-
-        <button
-          className="new-referral-btn"
-          onClick={() =>
-            navigate("/new-referral")
-          }
-        >
-          + New
-        </button>
-
-      </div>
-
-      {/* RECENT HEADER */}
-      <div className="recent-header">
-
-        <span>
-          RECENT REFERRALS
-        </span>
-
-        <span className="record-count">
-          {referrals.length} records
-        </span>
-
-      </div>
-
-      {/* REFERRALS */}
-
-      {referrals.length === 0 ? (
-
-        <div
-          style={{
-            padding: "30px",
-            textAlign: "center",
-          }}
-        >
-          No referrals created yet.
-        </div>
-
-      ) : (
-
-        referrals.map((referral) => (
-
-          <div
-            key={referral.id}
-            className="referral-home-card"
-          >
-
-            <h3>
-              {referral.patientName}
-            </h3>
-
-            <p className="hospital-line">
-              {referral.id} •{" "}
-              {referral.hospital}
+            <p className="facility-label">
+              UBUZIMA-LINK
             </p>
 
-            <p className="diagnosis-line">
-              {referral.diagnosis}
-            </p>
+            <h1>
+              Kimironko Health Post
+            </h1>
 
-            <div className="card-footer">
+            <div className="connection-status">
 
-              <span
-                className={
-                  referral.status ===
-                  "Synced"
-                    ? "status-badge synced-badge"
-                    : "status-badge pending-badge"
-                }
-              >
-                ● {referral.status}
-              </span>
+              <Wifi size={16} />
 
-              <span className="time-label">
-                {referral.time}
+              <span>
+                {isOnline
+                  ? "Online"
+                  : "Offline"}
               </span>
 
             </div>
 
           </div>
 
-        ))
+          <div className="notification-bell">
 
-      )}
+            <Bell size={22} />
 
-      {/* BOTTOM NAV */}
+            {notifications > 0 && (
 
-      <div className="bottom-nav">
+              <span className="notification-count">
 
-        <div className="nav-item active-nav">
-          <div>🏠</div>
-          <span>Home</span>
+                {notifications}
+
+              </span>
+
+            )}
+
+          </div>
+
         </div>
 
-        <div
-          className="nav-item"
+      </header>
+
+      {/* QUICK ACTIONS */}
+
+      <section className="dashboard-section">
+
+        <h2>
+          Quick Actions
+        </h2>
+
+        <div className="actions-grid">
+
+          <button
+            className="action-card"
+            onClick={() =>
+              navigate("/patient-search")
+            }
+          >
+
+            <Plus size={28} />
+
+            <span>
+              Find Patient
+            </span>
+
+          </button>
+
+          <button
+            className="action-card"
+            onClick={() =>
+              navigate(
+                "/register-patient"
+              )
+            }
+          >
+
+            <User size={28} />
+
+            <span>
+              Register Patient
+            </span>
+
+          </button>
+
+        </div>
+
+      </section>
+
+      {/* OVERVIEW */}
+{/* OVERVIEW */}
+
+<section className="dashboard-section">
+
+  <h2>
+    Today's Overview
+  </h2>
+
+  <div className="overview-card">
+
+    <div className="overview-item">
+
+      <h3>
+        {pendingSync}
+      </h3>
+
+      <p>
+        Pending Sync
+      </p>
+
+    </div>
+
+    <div className="overview-item">
+
+      <h3>
+        {pendingReview}
+      </h3>
+
+      <p>
+        Pending Review
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+{/* ALERTS */}
+     
+<section className="dashboard-section">
+
+  <h2>
+    Alerts
+  </h2>
+
+  <div className="details-card">
+
+    <p>
+      No active network alerts.
+    </p>
+
+  </div>
+
+</section>
+      {/* NAVIGATION */}
+
+      <nav className="bottom-nav-v2">
+
+        <button className="nav-button active">
+
+          <House size={20} />
+
+          <span>
+            Home
+          </span>
+
+        </button>
+
+        <button
+          className="nav-button"
           onClick={() =>
             navigate("/referrals")
           }
         >
-          <div>📄</div>
-          <span>Referrals</span>
-        </div>
 
-        <div
-          className="nav-item"
+          <FileText size={20} />
+
+          <span>
+            Work Queue
+          </span>
+
+        </button>
+
+        <button
+          className="nav-button"
           onClick={() =>
             navigate("/sync")
           }
         >
-          <div>🔄</div>
-          <span>Sync</span>
-        </div>
 
-        <div className="nav-item">
-          <div>👤</div>
-          <span>Profile</span>
-        </div>
+          <Wifi size={20} />
 
-      </div>
+          <span>
+            Sync
+          </span>
+
+        </button>
+
+        <button
+          className="nav-button"
+        >
+
+          <User size={20} />
+
+          <span>
+            Profile
+          </span>
+
+        </button>
+
+      </nav>
 
     </div>
   );

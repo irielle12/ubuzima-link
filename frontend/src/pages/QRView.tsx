@@ -5,124 +5,222 @@ import { db } from "../services/db";
 
 function QRView() {
   const navigate = useNavigate();
-  const [referral, setReferral] = useState<any>(null);
+
+  const [referral, setReferral] =
+    useState<any>(null);
+
+  const [patient, setPatient] =
+    useState<any>(null);
 
   useEffect(() => {
-    const loadReferral = async () => {
-      const all = await db.referrals.toArray();
+    const loadData = async () => {
 
-      if (all.length > 0) {
-        setReferral(all[all.length - 1]);
-      }
+      const referrals =
+        await db.referrals.toArray();
+
+      if (referrals.length === 0)
+        return;
+
+      const latestReferral =
+        referrals[
+          referrals.length - 1
+        ];
+
+      setReferral(latestReferral);
+
+      const patientData =
+        await db.patients.get(
+          latestReferral.patientId
+        );
+
+      setPatient(patientData);
     };
 
-    loadReferral();
+    loadData();
   }, []);
 
-  if (!referral) {
+  if (!referral || !patient) {
     return (
-      <div className="qr-screen">
-        <div className="empty-state">
-          <h2>No Referral Found</h2>
+      <div className="patient-search-page">
 
-          <button
-            onClick={() => navigate("/dashboard")}
-          >
-            Return to Dashboard
-          </button>
-        </div>
+        <h2>
+          No Referral Found
+        </h2>
+
+        <button
+          className="login-btn-v2"
+          onClick={() =>
+            navigate("/dashboard")
+          }
+        >
+          Return to Dashboard
+        </button>
+
       </div>
     );
   }
 
-  return (
-    <div className="qr-screen">
+  const qrPayload = {
+    referralId: referral.id,
 
-      {/* TOP BAR */}
-      <div className="qr-topbar">
+    patient,
+
+    diagnosis:
+      referral.diagnosis,
+
+    urgency:
+      referral.urgency,
+
+    hospital:
+      referral.hospital,
+
+    createdAt:
+      referral.time,
+  };
+
+  return (
+    <div className="patient-search-page">
+
+      <div className="patient-header">
 
         <button
-          className="back-btn"
-          onClick={() => navigate("/dashboard")}
+          className="back-btn-v2"
+          onClick={() =>
+            navigate("/dashboard")
+          }
         >
           ←
         </button>
 
-        <h3>Referral Token</h3>
+        <div>
+          <h1>
+            Referral Created
+          </h1>
 
-        <div className="offline-indicator">
-          OFFLINE
+          <p>
+            Present this QR code
+            at the receiving
+            hospital
+          </p>
         </div>
 
       </div>
 
       {/* SUCCESS CARD */}
-      <div className="success-card">
 
-        <div className="success-icon">
-          ✓
-        </div>
+      <div className="login-card-v2">
 
-        <h2>Referral Created</h2>
+        <h3>
+          Referral Successfully
+          Created
+        </h3>
 
         <p>
-          Referral saved locally and ready for hospital verification.
+          Referral ID:
+          {" "}
+          {referral.id}
         </p>
 
       </div>
 
-      {/* QR CARD */}
-      <div className="qr-card">
+      {/* QR */}
 
+      <div
+        className="login-card-v2"
+        style={{
+          marginTop: "20px",
+          textAlign: "center",
+        }}
+      >
         <QRCode
-          value={JSON.stringify(referral)}
-          size={180}
+          value={JSON.stringify(
+            qrPayload
+          )}
+          size={220}
         />
-
       </div>
 
-      {/* REFERRAL ID */}
-      <div className="token-card">
+      {/* PATIENT */}
 
-        <span className="token-label">
-          Referral ID
-        </span>
-
-        <h3>{referral.id}</h3>
-
-      </div>
-
-      {/* DETAILS */}
-      <div className="patient-card">
-
-        <h4>Patient Information</h4>
+      <div
+        className="login-card-v2"
+        style={{
+          marginTop: "20px",
+        }}
+      >
+        <h3>
+          Patient Information
+        </h3>
 
         <p>
-          <strong>Name:</strong> {referral.patientName}
+          <strong>Name:</strong>
+          {" "}
+          {patient.fullName}
         </p>
 
         <p>
-          <strong>Hospital:</strong> {referral.hospital}
+          <strong>Gender:</strong>
+          {" "}
+          {patient.gender}
         </p>
 
         <p>
-          <strong>Status:</strong> {referral.status}
+          <strong>Phone:</strong>
+          {" "}
+          {patient.phoneNumber}
         </p>
 
       </div>
 
-      {/* ACTION BUTTON */}
+      {/* REFERRAL */}
+
+      <div
+        className="login-card-v2"
+        style={{
+          marginTop: "20px",
+        }}
+      >
+        <h3>
+          Referral Details
+        </h3>
+
+        <p>
+          <strong>
+            Diagnosis:
+          </strong>
+          {" "}
+          {referral.diagnosis}
+        </p>
+
+        <p>
+          <strong>
+            Urgency:
+          </strong>
+          {" "}
+          {referral.urgency}
+        </p>
+
+        <p>
+          <strong>
+            Destination:
+          </strong>
+          {" "}
+          {referral.hospital}
+        </p>
+
+      </div>
+
       <button
-        className="done-btn"
-        onClick={() => navigate("/dashboard")}
+        className="login-btn-v2"
+        style={{
+          marginTop: "20px",
+        }}
+        onClick={() =>
+          navigate("/dashboard")
+        }
       >
         Return to Dashboard
       </button>
-
-      {/* FOOTER */}
-      <p className="footer-note">
-        Present this QR code at the receiving hospital for verification.
-      </p>
 
     </div>
   );

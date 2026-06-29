@@ -1,200 +1,170 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Wifi, RefreshCw, ArrowLeft } from "lucide-react";
 import { db } from "../services/db";
 
 function Sync() {
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  const [pending, setPending] = useState(0);
-  const [synced, setSynced] = useState(0);
-  const [failed, setFailed] = useState(0);
+  const [pendingReferrals, setPendingReferrals] = useState<any[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    loadStats();
+    loadPendingReferrals();
 
-    const online = () => setIsOnline(true);
-    const offline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener("online", online);
-    window.addEventListener("offline", offline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener("online", online);
-      window.removeEventListener("offline", offline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
-  const loadStats = async () => {
+  const loadPendingReferrals = async () => {
     const referrals = await db.referrals.toArray();
 
-    setPending(
-      referrals.filter(
-        (r) => r.status === "Pending Sync"
-      ).length
-    );
-
-    setSynced(
-      referrals.filter(
-        (r) => r.status === "Synced"
-      ).length
-    );
-
-    setFailed(
-      referrals.filter(
-        (r) => r.status === "Failed"
-      ).length
+    setPendingReferrals(
+      referrals.filter((r) => r.workflowStatus === "Pending Sync")
     );
   };
 
-  const handleSync = async () => {
-    if (!navigator.onLine) {
-      alert("No internet connection available.");
+  const filteredReferrals = pendingReferrals.filter(
+    (referral) =>
+      referral.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      referral.hospital.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const syncAll = async () => {
+    if (!isOnline) {
+      alert("Internet connection required.");
       return;
     }
 
-    const referrals = await db.referrals.toArray();
-
-    for (const referral of referrals) {
-      if (referral.status === "Pending Sync") {
-        await db.referrals.update(
-          referral.id,
-          {
-            status: "Synced",
-          }
-        );
-      }
+    for (const referral of pendingReferrals) {
+      await db.referrals.update(referral.id, {
+        workflowStatus: "Pending Hospital Review",
+        syncStatus: "Synced",
+      });
     }
 
-    await loadStats();
+    alert("All referrals synchronized successfully.");
 
-    alert("Synchronization completed.");
+    navigate("/dashboard");
   };
 
   return (
-    <div className="sync-screen">
+    <div className="patient-search-page">
 
       {/* HEADER */}
-      <div className="sync-header">
+      <div className="patient-header">
 
         <button
-          className="back-circle"
-          onClick={() => navigate("/dashboard")}
+          className="back-btn-v2"
+          onClick={() => navigate(-1)}
         >
-          ←
+          <ArrowLeft size={20} />
         </button>
 
-        <div>
-          <h2>Sync & Network</h2>
-          <p>Manage data synchronization</p>
-        </div>
+        <div style={{ flex: 1 }}>
 
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h1>Sync Center</h1>
+
+            <div
+              className={
+                isOnline
+                  ? "connection-badge online"
+                  : "connection-badge offline"
+              }
+            >
+              <Wifi size={14} />
+              {isOnline ? "Online" : "Offline"}
+            </div>
+          </div>
+
+          <p>Manage offline referrals</p>
+        </div>
       </div>
 
-      {/* STATUS */}
-      <div className="offline-status-card">
+      {/* SEARCH + LIST CARD */}
+      <div
+        className="details-card"
+        style={{ marginBottom: "16px" }}
+      >
 
-        <div>
-          <h3>
-            {isOnline
-              ? "Online"
-              : "Offline Mode"}
+        <input
+          type="text"
+          placeholder="Search referral ID or hospital..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        {/* TITLE + INLINE BUTTON */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: "10px",
+            marginBottom: "10px",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+          <h3 style={{ margin: 0 }}>
+            Pending Synchronization ({pendingReferrals.length})
           </h3>
 
+          {pendingReferrals.length > 0 && (
+            <button
+              onClick={syncAll}
+              disabled={!isOnline}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 10px",
+                fontSize: "12px",
+                borderRadius: "8px",
+                border: "none",
+                background: isOnline ? "#2563eb" : "#94a3b8",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              <RefreshCw size={14} />
+              Sync All
+            </button>
+          )}
+        </div>
+
+        {/* LIST */}
+        {filteredReferrals.length === 0 ? (
           <p>
-            {pending} referrals pending sync
+            {searchTerm
+              ? "No matching referrals found."
+              : "No referrals are waiting for synchronization."}
           </p>
-        </div>
-
+        ) : (
+          filteredReferrals.map((referral) => (
+            <div key={referral.id} className="detail-row">
+              <span>{referral.id}</span>
+              <span>{referral.hospital}</span>
+            </div>
+          ))
+        )}
       </div>
-
-      {/* NETWORK */}
-      <h4 className="section-title">
-        NETWORK DIAGNOSTICS
-      </h4>
-
-      <div className="diagnostic-card">
-
-        <div className="diagnostic-row">
-          <span>Internet Status</span>
-
-          <span>
-            {isOnline
-              ? "🟢 Online"
-              : "🔴 Offline"}
-          </span>
-        </div>
-
-        <div className="diagnostic-row">
-          <span>Local Database</span>
-          <span>🟢 Ready</span>
-        </div>
-
-        <div className="diagnostic-row">
-          <span>Encryption Layer</span>
-          <span>🟢 Active</span>
-        </div>
-
-      </div>
-
-      {/* STATS */}
-      <div className="sync-stats">
-
-        <div className="sync-stat pending">
-          <h2>{pending}</h2>
-          <p>Pending</p>
-        </div>
-
-        <div className="sync-stat synced">
-          <h2>{synced}</h2>
-          <p>Synced</p>
-        </div>
-
-        <div className="sync-stat failed">
-          <h2>{failed}</h2>
-          <p>Failed</p>
-        </div>
-
-      </div>
-
-      {/* BUTTON */}
-      <button
-        className="sync-now-btn"
-        onClick={handleSync}
-      >
-        🔄 Sync Now
-      </button>
-
-      {/* NAV */}
-      <div className="bottom-nav">
-
-  <div
-    className="nav-item"
-    onClick={() => navigate("/dashboard")}
-  >
-    🏠
-    <span>Home</span>
-  </div>
-
-  <div
-    className="nav-item"
-    onClick={() => navigate("/referrals")}
-  >
-    📄
-    <span>Referrals</span>
-  </div>
-
-  <div className="nav-item active-nav">
-    🔄
-    <span>Sync</span>
-  </div>
-
-  <div className="nav-item">
-    👤
-    <span>Profile</span>
-  </div>
-
-</div>
 
     </div>
   );
