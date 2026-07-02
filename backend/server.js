@@ -1,48 +1,36 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
+
+const patientRoutes = require("./src/routes/patientRoutes");
+const referralRoutes = require("./src/routes/referralRoutes");
+const facilityRoutes = require("./src/routes/facilityRoutes");
+const referralEventRoutes = require("./src/routes/referralEventRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const returnReferralRoutes = require("./src/routes/returnReferralRoutes");
 
 app.use(cors());
 app.use(express.json());
 
-let referrals = [];
+app.use("/api/auth", authRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/referrals", referralRoutes);
+app.use("/api/facilities", facilityRoutes);
+app.use("/api/referrals", referralEventRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/referrals", returnReferralRoutes);
 
-app.post("/api/login", (req, res) => {
-
-  const { workerId, password } =
-    req.body;
-
-  if (
-    workerId === "HW12345" &&
-    password === "123456"
-  ) {
-    return res.json({
-      message: "Login Success"
-    });
-  }
-
-  res.status(401).json({
-    message: "Invalid Credentials"
+app.get("/", (req, res) => {
+  res.json({
+    message: "Ubuzima-Link API Running",
   });
 });
 
-app.get("/api/referrals", (req, res) => {
-  res.json(referrals);
-});
+const PORT = process.env.PORT || 5000;
 
-app.post("/api/referrals", (req, res) => {
-
-  const referral = {
-    id: Date.now(),
-    ...req.body
-  };
-
-  referrals.push(referral);
-
-  res.status(201).json(referral);
-});
-
-app.listen(5000, () => {
-  console.log("Server running");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

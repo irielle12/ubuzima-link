@@ -1,8 +1,10 @@
 import {
   BrowserRouter,
   Routes,
-  Route
+  Route,
+  Navigate
 } from "react-router-dom";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/login";
@@ -14,14 +16,29 @@ import Referrals from "./pages/Referrals";
 import PatientSearch from "./pages/PatientSearch";
 import CreatePatient from "./pages/RegisterPatient";
 import ReferralDetails from "./pages/ReferralDetails";
-import QueueReview from "./pages/QueueReview";
+import WorkQueueList from "./pages/WorkQueueList";
+import Profile from "./pages/Profile";
 
  import HospitalLogin from "./pages/HospitalLogin";
- import HospitalDashboard from "./pages/HospitalDashboard";
  import ReceiveReferral from "./pages/ReceiveReferral";
  import ReferralPreview from "./pages/ReferralPreview";
+import PatientProfile from "./pages/PatientProfile";
+
+import RequireNurse from "./components/RequireNurse";
+import RequireAdmin from "./components/RequireAdmin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import FacilitiesList from "./pages/admin/FacilitiesList";
+import UsersList from "./pages/admin/UsersList";
+
+import RequireHospital from "./components/RequireHospital";
+import HospitalLayout from "./pages/hospital/HospitalLayout";
+import HospitalQueue from "./pages/hospital/HospitalQueue";
+import HospitalReports from "./pages/hospital/HospitalReports";
+import ReceiveQR from "./pages/hospital/ReceiveQR";
+
 function App() {
   return (
+    <LanguageProvider>
     <BrowserRouter>
       <Routes>
 
@@ -33,64 +50,70 @@ function App() {
           path="/login"
           element={<Login />}
         />
-        <Route
-          path="/patient-search"
-          element={<PatientSearch />}
-         />
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
-        <Route
-  path="/referral-details"
-  element={<ReferralDetails />}
-/>
-        <Route
-          path="/new-referral"
-          element={<NewReferral />}
-        />
+        {/* Health worker routes — nurse role required */}
+        <Route element={<RequireNurse />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/patient-search" element={<PatientSearch />} />
+          <Route path="/patient-profile/:id" element={<PatientProfile />} />
+          <Route path="/referral-details/:id" element={<ReferralDetails />} />
+          <Route path="/new-referral" element={<NewReferral />} />
+          <Route path="/qr-view" element={<QRView />} />
+          <Route path="/referrals" element={<Referrals />} />
+          <Route path="/work-queue/:status" element={<WorkQueueList />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/sync" element={<Sync />} />
+          <Route path="/register-patient" element={<CreatePatient />} />
+        </Route>
 
-        <Route
-          path="/qr"
-          element={<QRView />}
-        />
+{/* Hospital desktop portal */}
+<Route path="/hospital/login" element={<HospitalLogin />} />
 <Route
-  path="/queue-review"
-  element={<QueueReview />}
-/>
-        <Route
-          path="/referrals"
-          element={<Referrals />}
-        />
+  path="/hospital"
+  element={
+    <RequireHospital>
+      <HospitalLayout />
+    </RequireHospital>
+  }
+>
+  <Route index element={<Navigate to="queue" replace />} />
+  <Route path="queue" element={<HospitalQueue />} />
+  <Route path="receive-qr" element={<ReceiveQR />} />
+  <Route path="reports" element={<HospitalReports />} />
+</Route>
 
-        <Route
-          path="/sync"
-          element={<Sync />}
-        />
-        <Route
-  path="/register-patient"
-  element={<CreatePatient />}
-/>
+{/* Legacy redirects — keep old routes working */}
+<Route path="/hospital-login" element={<Navigate to="/hospital/login" replace />} />
+<Route path="/hospital-dashboard" element={<Navigate to="/hospital/queue" replace />} />
+<Route path="/queue-review" element={<Navigate to="/hospital/queue" replace />} />
+<Route path="/hospital-referral/:id" element={<Navigate to="/hospital/queue" replace />} />
 
-<Route
-  path="/hospital-login"
-  element={<HospitalLogin />}
-/>
+<Route path="/receive-referral" element={<ReceiveReferral />} />
+<Route path="/referral-preview" element={<ReferralPreview />} />
 
 <Route
-  path="/hospital-dashboard"
-  element={<HospitalDashboard />}
-/>
-<Route
-  path="/receive-referral"
-  element={<ReceiveReferral />}
-/>
-<Route
-  path="/referral-preview"
-  element={<ReferralPreview />}
-/>
+  path="/admin"
+  element={
+    <RequireAdmin>
+      <AdminLayout />
+    </RequireAdmin>
+  }
+>
+  <Route
+    index
+    element={<Navigate to="facilities" replace />}
+  />
+  <Route
+    path="facilities"
+    element={<FacilitiesList />}
+  />
+  <Route
+    path="users"
+    element={<UsersList />}
+  />
+</Route>
       </Routes>
     </BrowserRouter>
+    </LanguageProvider>
   );
 }
 

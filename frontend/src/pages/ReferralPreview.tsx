@@ -64,7 +64,7 @@ function ReferralPreview() {
       );
 
       navigate(
-        "/hospital-queue"
+        "/queue-review"
       );
     };
 

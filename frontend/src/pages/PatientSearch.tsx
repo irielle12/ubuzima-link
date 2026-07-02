@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   Search,
   ArrowLeft,
   UserPlus,
   User,
 } from "lucide-react";
-import { db } from "../services/db";
+import {
+  getPatients,
+} from "../services/patientApi";
 
 function PatientSearch() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [searchTerm, setSearchTerm] =
     useState("");
@@ -21,42 +25,46 @@ function PatientSearch() {
     loadPatients();
   }, []);
 
-  const loadPatients = async () => {
-    const allPatients =
-      await db.patients.toArray();
+const loadPatients = async () => {
+  try {
 
-    setPatients(allPatients);
-  };
+    const data =
+      await getPatients();
 
+    setPatients(data);
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+};
   const filteredPatients =
     patients.filter((patient) => {
       const search =
         searchTerm.toLowerCase();
 
       return (
-        patient.fullName
+        `${patient.first_name} ${patient.last_name}`
           .toLowerCase()
           .includes(search) ||
-        patient.phoneNumber.includes(
+        patient.phone.includes(
           searchTerm
         ) ||
-        patient.nationalId.includes(
+        patient.national_id.includes(
           searchTerm
         )
       );
     });
+const selectPatient = (patient: any) => {
 
-  const selectPatient = (
-    patient: any
-  ) => {
-    localStorage.setItem(
-      "selectedPatient",
-      JSON.stringify(patient)
-    );
+  localStorage.setItem(
+    "selectedPatient",
+    JSON.stringify(patient)
+  );
 
-    navigate("/new-referral");
-  };
-
+  navigate(`/patient-profile/${patient.id}`);
+};
   return (
     <div className="patient-search-page">
 
@@ -74,12 +82,8 @@ function PatientSearch() {
         </button>
 
         <div>
-          <h1>Find Patient</h1>
-
-          <p>
-            Search by patient name,
-            phone number, or national ID
-          </p>
+          <h1>{t("Find Patient")}</h1>
+          <p>{t("Search by patient name, phone number, or national ID")}</p>
         </div>
 
       </div>
@@ -94,7 +98,7 @@ function PatientSearch() {
 
           <input
             type="text"
-            placeholder="Search patient..."
+            placeholder={t("Search patient...")}
             value={searchTerm}
             onChange={(e) =>
               setSearchTerm(
@@ -133,14 +137,14 @@ function PatientSearch() {
                   <User size={18} />
 
                   <strong>
-                    {patient.fullName}
+                    {patient.first_name} {patient.last_name}
                   </strong>
                 </div>
 
                 <p>
                   {patient.gender}
                   {" • "}
-                  {patient.phoneNumber}
+                  {patient.phone}
                 </p>
 
               </div>
@@ -156,58 +160,29 @@ function PatientSearch() {
           0 && (
           <div className="empty-patient-state">
 
-            <h3>
-              No patient found
-            </h3>
-
-            <p>
-              Register a new
-              patient record.
-            </p>
-
+            <h3>{t("No patient found")}</h3>
+            <p>{t("Register a new patient record.")}</p>
             <button
               className="register-patient-btn"
-              onClick={() =>
-                navigate(
-                  "/create-patient"
-                )
-              }
+              onClick={() => navigate("/register-patient?mode=referral")}
             >
               <UserPlus size={18} />
-
-              Register New Patient
+              {t("Register New Patient")}
             </button>
-
           </div>
         )}
 
-      {/* INITIAL STATE */}
-
       {!searchTerm && (
         <div className="empty-patient-state">
-
-          <h3>
-            Search for a patient
-          </h3>
-
-          <p>
-            Enter a name, phone
-            number, or national ID.
-          </p>
-
+          <h3>{t("Search for a patient")}</h3>
+          <p>{t("Enter a name, phone number, or national ID.")}</p>
           <button
             className="register-patient-btn"
-            onClick={() =>
-              navigate(
-                "/register-patient?mode=referral"
-              )
-            }
+            onClick={() => navigate("/register-patient?mode=referral")}
           >
             <UserPlus size={18} />
-
-            Register New Patient
+            {t("Register New Patient")}
           </button>
-
         </div>
       )}
 

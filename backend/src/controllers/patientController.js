@@ -8,49 +8,69 @@ const createPatient = async (req, res) => {
       dateOfBirth,
       phoneNumber,
       nationalId,
+      guardianNationalId,
     } = req.body;
 
-    const patientNumber =
-      "PAT-" + Date.now();
+    /* Duplicate check — two paths:
+       - Adult: match on own national_id
+       - Baby/minor: match on guardian_national_id + DOB + name */
+    if (nationalId) {
+      const existing = await pool.query(
+        `SELECT * FROM patients WHERE national_id = $1 LIMIT 1`,
+        [nationalId]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          message: "A patient with this National ID is already registered.",
+          existingPatient: existing.rows[0],
+        });
+      }
+    } else if (guardianNationalId) {
+      const nameParts = (fullName || "").trim().split(/\s+/);
+      const firstName = nameParts[0] || "";
+      const existing = await pool.query(
+        `SELECT * FROM patients
+         WHERE guardian_national_id = $1
+           AND date_of_birth = $2
+           AND LOWER(first_name) = LOWER($3)
+         LIMIT 1`,
+        [guardianNationalId, dateOfBirth, firstName]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          message: "A patient with this guardian ID, date of birth, and name is already registered.",
+          existingPatient: existing.rows[0],
+        });
+      }
+    }
+
+    const patientNumber = "PAT-" + Date.now();
+    const nameParts = (fullName || "").trim().split(/\s+/);
+    const firstName = nameParts[0] || fullName;
+    const lastName = nameParts.slice(1).join(" ") || "";
 
     const result = await pool.query(
-      `
-      INSERT INTO patients
-      (
-        patient_number,
-        national_id,
-        first_name,
-        last_name,
-        gender,
-        date_of_birth,
-        phone
-      )
-      VALUES
-      ($1,$2,$3,$4,$5,$6,$7)
-      RETURNING *
-      `,
+      `INSERT INTO patients
+       (patient_number, national_id, guardian_national_id, first_name, last_name, gender, date_of_birth, phone)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING *`,
       [
         patientNumber,
-        nationalId,
-        fullName,
-        "",
+        nationalId || null,
+        guardianNationalId || null,
+        firstName,
+        lastName,
         gender,
         dateOfBirth,
         phoneNumber,
       ]
     );
 
-    res.status(201).json(
-      result.rows[0]
-    );
+    res.status(201).json(result.rows[0]);
 
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      message:
-        "Failed to create patient",
-    });
+    res.status(500).json({ message: "Failed to create patient" });
   }
 };
 

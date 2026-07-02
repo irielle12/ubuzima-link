@@ -1,6 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
+
+import { getReferralsBySource, getFacilityStats } from "../services/referralApi";
+import { getUser } from "../services/authApi";
+import { getFacilityById } from "../services/facilityApi";
 import { db } from "../services/db";
+import {
+  getLastSyncAttempt,
+  getConnectivityState,
+  recordConnectivityChange,
+} from "../services/syncStatus";
+import ConnectionStatus from "../components/ConnectionStatus";
 
 import {
   Plus,
@@ -9,104 +20,170 @@ import {
   FileText,
   User,
   Bell,
+  RefreshCw,
+  AlertTriangle,
+  WifiOff,
 } from "lucide-react";
+
+const STALE_SYNC_THRESHOLD_HOURS = 24;
+
+function formatFeedbackRate(stats: any) {
+  if (!stats || stats.closedCount === 0) return "No data yet";
+
+  return `${Math.round(stats.feedbackCompletionRate)}%`;
+}
 
 function Dashboard() {
   const navigate = useNavigate();
-
-  const [pendingSync, setPendingSync] =
-    useState(0);
-
-  const [pendingReview, setPendingReview] =
-    useState(0);
-
-  const [recentReferrals, setRecentReferrals] =
-    useState<any[]>([]);
+  const { lang, setLang, t } = useLanguage();
 
   const [notifications, setNotifications] =
     useState(0);
 
-  const [isOnline, setIsOnline] =
-    useState(navigator.onLine);
+  const [closedReferrals, setClosedReferrals] =
+    useState<any[]>([]);
+
+  const [facilityName, setFacilityName] =
+    useState("Health Facility");
+
+  const [stats, setStats] =
+    useState<any>(null);
+
+  const [statsLoading, setStatsLoading] =
+    useState(true);
+
+  const [statsError, setStatsError] =
+    useState("");
+
+  const [staleSyncCount, setStaleSyncCount] =
+    useState(0);
+
+  const [lastSyncAttempt, setLastSyncAttempt] =
+    useState<{ timestamp: number; success: boolean } | null>(null);
+
+  const [offlineSince, setOfflineSince] =
+    useState<number | null>(null);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    loadNotifications();
+    loadFacility();
+    loadStats();
+    loadSyncAlerts();
 
-  useEffect(() => {
+    if (!navigator.onLine) {
+      const connectivity = getConnectivityState();
 
-    const handleOnline = () =>
-      setIsOnline(true);
-
-    const handleOffline = () =>
-      setIsOnline(false);
-
-    window.addEventListener(
-      "online",
-      handleOnline
-    );
-
-    window.addEventListener(
-      "offline",
-      handleOffline
-    );
-
-    return () => {
-
-      window.removeEventListener(
-        "online",
-        handleOnline
+      setOfflineSince(
+        connectivity && connectivity.online === false
+          ? connectivity.since
+          : Date.now()
       );
+    }
 
-      window.removeEventListener(
-        "offline",
-        handleOffline
-      );
-
+    const handleOnline = () => {
+      recordConnectivityChange(true);
+      setOfflineSince(null);
     };
 
+    const handleOffline = () => {
+      recordConnectivityChange(false);
+      setOfflineSince(Date.now());
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadSyncAlerts = async () => {
+    try {
+      const local = await db.referrals.toArray();
+      const now = Date.now();
+      const thresholdMs = STALE_SYNC_THRESHOLD_HOURS * 60 * 60 * 1000;
 
-    const referrals =
-      await db.referrals.toArray();
+      const stale = local.filter((r) => {
+        if (r.workflowStatus !== "Pending Sync") return false;
 
-    setPendingSync(
+        const created = new Date(r.time).getTime();
 
-      referrals.filter(
-        (r) =>
-          r.workflowStatus ===
-          "Pending Sync"
-      ).length
+        if (Number.isNaN(created)) return false;
 
-    );
+        return now - created > thresholdMs;
+      });
 
-    setPendingReview(
+      setStaleSyncCount(stale.length);
+    } catch (err) {
+      console.error(err);
+    }
 
-      referrals.filter(
-        (r) =>
-          r.workflowStatus ===
-          "Pending Hospital Review"
-      ).length
+    setLastSyncAttempt(getLastSyncAttempt());
+  };
 
-    );
+  const loadFacility = async () => {
+    try {
+      const user = getUser();
 
-    setRecentReferrals(
-      referrals.slice(-5).reverse()
-    );
+      if (!user?.facilityId) return;
 
-    setNotifications(
+      const facility = await getFacilityById(user.facilityId);
 
-      referrals.filter(
-        (r) =>
-          r.workflowStatus ===
-            "Outcome Recorded" &&
-          !r.feedbackViewed
-      ).length
+      setFacilityName(facility.name);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    );
+  const loadNotifications = async () => {
+    try {
+      const user = getUser();
+      if (!user?.facilityId) return;
 
+      const referrals = await getReferralsBySource();
+      const closed = referrals.filter((r: any) => r.workflow_status === "Closed");
+
+      setClosedReferrals(closed);
+
+      const seenKey = `seenClosedCount_${user.facilityId}`;
+      const seenCount = parseInt(localStorage.getItem(seenKey) || "0", 10);
+      setNotifications(Math.max(0, closed.length - seenCount));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBellClick = () => {
+    const user = getUser();
+    if (user?.facilityId) {
+      localStorage.setItem(`seenClosedCount_${user.facilityId}`, closedReferrals.length.toString());
+    }
+    setNotifications(0);
+    navigate("/work-queue/closed");
+  };
+
+  const loadStats = async () => {
+    try {
+      setStatsLoading(true);
+      setStatsError("");
+
+      const user = getUser();
+
+      if (!user?.facilityId) {
+        setStats(null);
+        return;
+      }
+
+      const data = await getFacilityStats();
+
+      setStats(data);
+    } catch (err: any) {
+      setStatsError(err.message || "Failed to load reports.");
+    } finally {
+      setStatsLoading(false);
+    }
   };
 
   return (
@@ -125,37 +202,35 @@ function Dashboard() {
             </p>
 
             <h1>
-              Kimironko Health Post
+              {facilityName}
             </h1>
 
-            <div className="connection-status">
-
-              <Wifi size={16} />
-
-              <span>
-                {isOnline
-                  ? "Online"
-                  : "Offline"}
-              </span>
-
-            </div>
+            <ConnectionStatus />
 
           </div>
 
-          <div className="notification-bell">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div
+              className="notification-bell"
+              onClick={handleBellClick}
+              style={{ cursor: "pointer" }}
+              title={t("View hospital updates")}
+            >
+              <Bell size={22} />
+              {notifications > 0 && (
+                <span className="notification-count">{notifications}</span>
+              )}
+            </div>
 
-            <Bell size={22} />
-
-            {notifications > 0 && (
-
-              <span className="notification-count">
-
-                {notifications}
-
-              </span>
-
-            )}
-
+            <div
+              onClick={() => setLang(lang === "en" ? "rw" : "en")}
+              style={{ cursor: "pointer", textAlign: "center", lineHeight: 1.2 }}
+            >
+              <div style={{ fontSize: 16 }}>{lang === "en" ? "🇷🇼" : "🇬🇧"}</div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: "#64748b", letterSpacing: "0.04em", marginTop: 2 }}>
+                {lang === "en" ? "KINYARWANDA" : "ENGLISH"}
+              </div>
+            </div>
           </div>
 
         </div>
@@ -166,9 +241,7 @@ function Dashboard() {
 
       <section className="dashboard-section">
 
-        <h2>
-          Quick Actions
-        </h2>
+        <h2>{t("Quick Actions")}</h2>
 
         <div className="actions-grid">
 
@@ -181,9 +254,7 @@ function Dashboard() {
 
             <Plus size={28} />
 
-            <span>
-              Find Patient
-            </span>
+            <span>{t("Find Patient")}</span>
 
           </button>
 
@@ -198,9 +269,7 @@ function Dashboard() {
 
             <User size={28} />
 
-            <span>
-              Register Patient
-            </span>
+            <span>{t("Register Patient")}</span>
 
           </button>
 
@@ -208,60 +277,134 @@ function Dashboard() {
 
       </section>
 
-      {/* OVERVIEW */}
-{/* OVERVIEW */}
+      {/* REPORTS */}
 
 <section className="dashboard-section">
 
-  <h2>
-    Today's Overview
-  </h2>
+  <h2>{t("Facility Reports")}</h2>
 
-  <div className="overview-card">
+  {statsLoading && (
+    <div className="details-card">{t("Loading reports...")}</div>
+  )}
 
-    <div className="overview-item">
+  {!statsLoading && statsError && (
+    <div className="details-card" style={{ color: "red" }}>
+      {statsError}
 
-      <h3>
-        {pendingSync}
-      </h3>
+      <button
+        className="primary-action-btn"
+        onClick={loadStats}
+        style={{ marginTop: 10 }}
+      >
+        <RefreshCw size={14} /> Retry
+      </button>
+    </div>
+  )}
 
-      <p>
-        Pending Sync
-      </p>
+  {!statsLoading && !statsError && (
+
+    <div className="queue-grid">
+
+      <div className="queue-card">
+
+        <h3>
+          {formatFeedbackRate(stats)}
+        </h3>
+
+        <p>{t("Feedback Completion")}</p>
+
+        <small>
+          {stats?.closedCount || 0} closed referral{stats?.closedCount === 1 ? "" : "s"}
+        </small>
+
+      </div>
+
+      <div className="queue-card">
+
+        <h3>
+          {stats?.referralsThisWeek ?? "—"}
+        </h3>
+
+        <p>{t("Referrals This Week")}</p>
+        <small>{stats?.referralsLastWeek ?? 0} {t("last week")}</small>
+
+      </div>
 
     </div>
 
-    <div className="overview-item">
-
-      <h3>
-        {pendingReview}
-      </h3>
-
-      <p>
-        Pending Review
-      </p>
-
-    </div>
-
-  </div>
+  )}
 
 </section>
 
 {/* ALERTS */}
-     
+
 <section className="dashboard-section">
 
-  <h2>
-    Alerts
-  </h2>
+  <h2>{t("Sync Alerts")}</h2>
 
-  <div className="details-card">
+  {staleSyncCount === 0 &&
+    !(lastSyncAttempt && !lastSyncAttempt.success) &&
+    !offlineSince && (
+    <div className="details-card">
+      <p>{t("No active network alerts.")}</p>
+    </div>
+  )}
 
-    <p>
-      No active network alerts.
-    </p>
+  {staleSyncCount > 0 && (
 
-  </div>
+    <div className="details-card alert-card warning">
+
+      <AlertTriangle size={18} />
+
+      <p>
+        {staleSyncCount} referral{staleSyncCount === 1 ? "" : "s"} waiting
+        to sync for over {STALE_SYNC_THRESHOLD_HOURS} hours.
+      </p>
+
+    </div>
+
+  )}
+
+  {lastSyncAttempt && !lastSyncAttempt.success && (
+
+    <div className="details-card alert-card error">
+
+      <AlertTriangle size={18} />
+
+      <div>
+
+        <p>
+          Last sync attempt failed at{" "}
+          {new Date(lastSyncAttempt.timestamp).toLocaleTimeString()}.
+        </p>
+
+        <button
+          className="secondary-action-btn"
+          onClick={() => navigate("/sync")}
+          style={{ marginTop: 10 }}
+        >
+          {t("Retry Sync")}
+        </button>
+
+      </div>
+
+    </div>
+
+  )}
+
+  {offlineSince && (
+
+    <div className="details-card alert-card offline">
+
+      <WifiOff size={18} />
+
+      <p>
+        {t("Offline since")} {new Date(offlineSince).toLocaleTimeString()}.
+      </p>
+
+    </div>
+
+  )}
 
 </section>
       {/* NAVIGATION */}
@@ -272,9 +415,7 @@ function Dashboard() {
 
           <House size={20} />
 
-          <span>
-            Home
-          </span>
+          <span>{t("Home")}</span>
 
         </button>
 
@@ -287,9 +428,7 @@ function Dashboard() {
 
           <FileText size={20} />
 
-          <span>
-            Work Queue
-          </span>
+          <span>{t("Work Queue")}</span>
 
         </button>
 
@@ -302,21 +441,20 @@ function Dashboard() {
 
           <Wifi size={20} />
 
-          <span>
-            Sync
-          </span>
+          <span>{t("Sync")}</span>
 
         </button>
 
         <button
           className="nav-button"
+          onClick={() =>
+            navigate("/profile")
+          }
         >
 
           <User size={20} />
 
-          <span>
-            Profile
-          </span>
+          <span>{t("Profile")}</span>
 
         </button>
 

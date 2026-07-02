@@ -66,7 +66,7 @@ function Landing() {
 
           <button
             className="portal-card"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login?role=admin")}
           >
             <div className="portal-icon">
               <ShieldCheck size={24} />

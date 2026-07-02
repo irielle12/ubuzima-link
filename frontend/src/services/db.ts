@@ -11,29 +11,37 @@ export interface Patient {
 
 export interface Referral {
   id: string;
-
   patientId: string;
-
+  referralNumber?: string;
+  chiefComplaint?: string;
+  medicalHistory?: string;
   diagnosis: string;
-
+  vitalBp?: string;
+  vitalHeartRate?: string;
+  vitalTemperature?: string;
+  vitalRespiratoryRate?: string;
+  actionTaken?: string;
   urgency: string;
-
   hospital: string;
-
-workflowStatus:
-  | "Draft"
-  | "Pending Sync"
-  | "Pending Hospital Review"
-  | "Acknowledged"
-  | "Feedback Received"
-  | "Closed";
-
-  syncStatus:
-    | "Pending"
-    | "Synced";
-
+  referringFacility?: string;
+  referringProvider?: string;
+  destinationFacilityId?: string;
+  workflowStatus:
+    | "Draft"
+    | "Pending Sync"
+    | "Pending Hospital Review"
+    | "Acknowledged"
+    | "Feedback Received"
+    | "Closed";
+  syncStatus: "Pending" | "Synced";
+  synced?: boolean;
   time: string;
+  patientName?: string;
+  patientAge?: string;
+  patientGender?: string;
+  patientPhone?: string;
 }
+
 class UbuzimaDB extends Dexie {
   patients!: Dexie.Table<Patient, string>;
   referrals!: Dexie.Table<Referral, string>;
@@ -41,12 +49,12 @@ class UbuzimaDB extends Dexie {
   constructor() {
     super("UbuzimaDB");
 
-    this.version(2).stores({
+    this.version(4).stores({
       patients:
         "id, fullName, nationalId, phoneNumber",
 
       referrals:
-        "id, status, hospital",
+        "id, workflowStatus, syncStatus, destinationFacilityId",
     });
 
     this.patients = this.table("patients");

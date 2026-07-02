@@ -3,128 +3,136 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { login as loginRequest, getUser } from "../services/authApi";
+import "../styles/hospital.css";
 
 function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const role =
-    searchParams.get("role") || "worker";
+  const role = searchParams.get("role") || "worker";
 
-  const [workerId, setWorkerId] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
+  const [workerId, setWorkerId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const getTitle = () => {
     switch (role) {
-      case "hospital":
-        return "Hospital Staff Login";
-
       case "admin":
         return "Administrator Login";
-
       default:
         return "Health Worker Login";
     }
   };
-  const handleLogin = () => {
-  if (!workerId || !password) return;
 
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      workerId,
-      role,
-    })
-  );
+  const getSubtitle = () => {
+    switch (role) {
+      case "admin":
+        return "Access your administrator account";
+      default:
+        return "Access your health worker account";
+    }
+  };
 
-  navigate("/dashboard");
-}; 
-return (
-    <div className="login-v2">
+  const handleLogin = async () => {
+    if (!workerId || !password) return;
 
-      <div className="login-container-v2">
+    try {
+      setLoggingIn(true);
+      setError("");
 
-        <div className="login-header-v2">
+      await loginRequest(workerId, password);
 
+      const loggedInUser = getUser();
+
+      if (loggedInUser?.role === "admin") {
+        navigate("/admin/facilities");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid Staff ID or password.");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  return (
+    <div className="hospital-login-shell">
+      <div className="hospital-login-card">
+
+        <div className="hospital-login-logo">
           <h1>Ubuzima-Link</h1>
-
-          <p>
-            Healthcare Referral
-            Management System
-          </p>
-
+          <p>Healthcare Referral Management System</p>
         </div>
 
-        <div className="login-card-v2">
+        <div className="hospital-login-divider" />
 
-          <h2>{getTitle()}</h2>
+        <h2 style={{ margin: "0 0 20px", fontSize: 17, color: "#0f172a" }}>
+          {getTitle()}
+        </h2>
 
-          <p className="login-subtitle">
-            Sign in to continue
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>
+          {getSubtitle()}
+        </p>
+
+        <label>Staff ID</label>
+        <input
+          type="text"
+          autoComplete="off"
+          placeholder="Enter your staff ID"
+          value={workerId}
+          onChange={(e) => setWorkerId(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+        />
+
+        <label>Password</label>
+        <input
+          type="password"
+          placeholder="Enter your password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+        />
+
+        {error && (
+          <p style={{ color: "#dc2626", fontSize: 13, margin: "0 0 10px" }}>
+            {error}
           </p>
+        )}
 
-          <label>
-            STAFF ID
-          </label>
+        <button
+          className="hospital-login-btn"
+          onClick={handleLogin}
+          disabled={loggingIn}
+        >
+          {loggingIn ? "Signing in..." : "Sign In"}
+        </button>
 
-          <input
-            type="text"
-            autoComplete="off"
-            placeholder="Enter Staff ID"
-            value={workerId}
-            onChange={(e) =>
-              setWorkerId(
-                e.target.value
-              )
-            }
-          />
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#94a3b8" }}>
+          Contact your administrator if you need access
+        </p>
 
-          <label>
-            Password
-          </label>
-
-          <input
-            type="password"
-            placeholder="Enter Password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) =>
-              setPassword(
-                e.target.value
-              )
-            }
-          />
-
+        <p style={{ textAlign: "center", marginTop: 12 }}>
           <button
-            className="login-btn-v2"
-            onClick={handleLogin}
+            onClick={() => navigate("/")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748b",
+              fontSize: 13,
+              cursor: "pointer",
+              textDecoration: "underline",
+              padding: 0,
+            }}
           >
-            Sign In
+            ← Back to home
           </button>
-
-        </div>
-
-        <div className="login-footer-v2">
-
-          <span>
-            Offline First
-          </span>
-
-          <span>
-            Secure Access
-          </span>
-
-          <span>
-            QR Enabled
-          </span>
-
-        </div>
+        </p>
 
       </div>
-
     </div>
   );
 }

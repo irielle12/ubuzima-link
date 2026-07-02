@@ -19,6 +19,12 @@ const login = async (req, res) => {
 
     const user = result.rows[0];
 
+    if (user.active === false) {
+      return res.status(403).json({
+        message: "This account has been deactivated.",
+      });
+    }
+
     const validPassword = await bcrypt.compare(
       password,
       user.password_hash
@@ -34,6 +40,7 @@ const login = async (req, res) => {
       {
         id: user.id,
         role: user.role,
+        facilityId: user.facility_id,
       },
       process.env.JWT_SECRET,
       {
@@ -48,7 +55,9 @@ const login = async (req, res) => {
         staffId: user.staff_id,
         firstName: user.first_name,
         lastName: user.last_name,
+        email: user.email,
         role: user.role,
+        facilityId: user.facility_id,
       },
     });
   } catch (error) {

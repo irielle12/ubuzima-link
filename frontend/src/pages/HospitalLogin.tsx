@@ -1,126 +1,108 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login as loginRequest, getUser } from "../services/authApi";
+import "../styles/hospital.css";
 
 function HospitalLogin() {
   const navigate = useNavigate();
 
-  const [hospitalId, setHospitalId] =
-    useState("");
+  const [staffId, setStaffId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
 
-  const [password, setPassword] =
-    useState("");
+  const handleLogin = async () => {
+    if (!staffId || !password) return;
 
-  const handleLogin = () => {
+    try {
+      setLoggingIn(true);
+      setError("");
 
-    if (
-      !hospitalId ||
-      !password
-    )
-      return;
+      await loginRequest(staffId, password);
 
-    localStorage.setItem(
-      "hospitalUser",
-      JSON.stringify({
-        hospitalId,
-      })
-    );
+      const user = getUser();
 
-    navigate(
-      "/hospital-dashboard"
-    );
+      localStorage.setItem(
+        "hospitalUser",
+        JSON.stringify({ hospitalId: user?.facilityId })
+      );
+
+      navigate("/hospital/queue");
+    } catch (err: any) {
+      setError(err.message || "Invalid Staff ID or password.");
+    } finally {
+      setLoggingIn(false);
+    }
   };
 
   return (
-    <div className="login-v2">
-
-      <div className="login-container-v2">
-
-        <div className="login-header-v2">
-
-          <h1>
-            Ubuzima-Link
-          </h1>
-
-          <p>
-            Healthcare Referral
-            Management System
-          </p>
-
+    <div className="hospital-login-shell">
+      <div className="hospital-login-card">
+        <div className="hospital-login-logo">
+          <h1>Ubuzima-Link</h1>
+          <p>Healthcare Referral Management System</p>
         </div>
 
-        <div className="login-card-v2">
+        <div className="hospital-login-divider" />
 
-          <h2>
-            Hospital Staff Login
-          </h2>
+        <h2 style={{ margin: "0 0 20px", fontSize: 17, color: "#0f172a" }}>
+          Hospital Staff Login
+        </h2>
 
-          <p className="login-subtitle">
+        <label>Staff ID</label>
+        <input
+          type="text"
+          autoComplete="off"
+          placeholder="Enter your staff ID"
+          value={staffId}
+          onChange={(e) => setStaffId(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+        />
 
-            Sign in to continue
+        <label>Password</label>
+        <input
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+        />
 
+        {error && (
+          <p style={{ color: "#dc2626", fontSize: 13, margin: "0 0 10px" }}>
+            {error}
           </p>
+        )}
 
-          <label>
-            HOSPITAL ID
-          </label>
+        <button
+          className="hospital-login-btn"
+          onClick={handleLogin}
+          disabled={loggingIn}
+        >
+          {loggingIn ? "Signing in..." : "Sign In"}
+        </button>
 
-          <input
-            type="text"
-            placeholder="Enter Hospital ID"
-            value={hospitalId}
-            onChange={(e) =>
-              setHospitalId(
-                e.target.value
-              )
-            }
-          />
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#94a3b8" }}>
+          Hospital staff only · Contact your administrator if you need access
+        </p>
 
-          <label>
-            Password
-          </label>
-
-          <input
-            type="password"
-            placeholder="Enter Password"
-            value={password}
-            onChange={(e) =>
-              setPassword(
-                e.target.value
-              )
-            }
-          />
-
+        <p style={{ textAlign: "center", marginTop: 12 }}>
           <button
-            className="login-btn-v2"
-            onClick={
-              handleLogin
-            }
+            onClick={() => navigate("/")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748b",
+              fontSize: 13,
+              cursor: "pointer",
+              textDecoration: "underline",
+              padding: 0,
+            }}
           >
-
-            Sign In
-
+            ← Back to home
           </button>
-
-        </div>
-
-        <div className="login-footer-v2">
-
-          <span>
-            Offline First
-          </span>
-
-          <span>
-            Secure Access
-          </span>
-
-          <span>
-            QR Enabled
-          </span>
-
-        </div>
-
+        </p>
       </div>
-
     </div>
   );
 }

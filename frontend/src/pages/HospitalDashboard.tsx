@@ -127,7 +127,7 @@ function HospitalDashboard() {
           <button
             className="action-card"
             onClick={() =>
-              navigate("/hospital-queue")
+              navigate("/queue-review")
             }
           >
 
@@ -201,7 +201,7 @@ function HospitalDashboard() {
         <button
           className="nav-button"
           onClick={() =>
-            navigate("/hospital-queue")
+            navigate("/queue-review")
           }
         >
 
