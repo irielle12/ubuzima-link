@@ -1,6 +1,3 @@
--- Ubuzima-Link database schema
--- Generated from live DB — use this for fresh deployments.
--- Run in order: facilities → users → patients → referrals → referral_events
 
 -- ============================================================
 -- FACILITIES
