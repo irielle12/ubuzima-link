@@ -12,7 +12,6 @@ function QRView() {
   const state: any = location.state;
 
   const [qrPayload, setQrPayload] = useState<any>(null);
-  const [displayData, setDisplayData] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(false);
 
   const qrRef = useRef<HTMLDivElement>(null);
@@ -20,7 +19,6 @@ function QRView() {
   useEffect(() => {
     if (state?.qrPayload) {
       setQrPayload(state.qrPayload);
-      setDisplayData(state.displayData);
       setIsOffline(!!state.offline);
     } else {
       loadFromDexie();
@@ -47,7 +45,6 @@ function QRView() {
     };
 
     setQrPayload(payload);
-    setDisplayData({ patient: { phone: r.patientPhone }, hospitalName: r.hospital });
     setIsOffline(!payload.synced);
   };
 

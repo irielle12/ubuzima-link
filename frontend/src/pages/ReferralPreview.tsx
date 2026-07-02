@@ -55,7 +55,7 @@ function ReferralPreview() {
         referral.id,
         {
           workflowStatus:
-            "Accepted",
+            "Acknowledged",
         }
       );
 

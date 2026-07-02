@@ -21,7 +21,6 @@ export const rw: Record<string, string> = {
   "View hospital updates": "Reba amakuru y'ibitaro",
 
   // ── Patient Search ──
-  "Find Patient": "Shaka Umurwayi",
   "Search by patient name, phone number, or national ID": "Shakisha izina, nimero ya telefoni, cyangwa indangamuntu",
   "Search patient...": "Shakisha umurwayi...",
   "No patient found": "Nta murwayi wabonetse",
@@ -41,7 +40,6 @@ export const rw: Record<string, string> = {
   "Male": "Gabo",
   "Female": "Gore",
   "Date of Birth": "Itariki y'amavuko",
-  "Phone Number": "Nimero ya telefoni",
   "(optional)": "(si ngombwa)",
   "National ID": "Indangamuntu",
   "16-digit National ID": "Indangamuntu y'imibare 16",
@@ -49,7 +47,6 @@ export const rw: Record<string, string> = {
   "16-digit National ID of parent or guardian": "Indangamuntu y'imibare 16 ya mubyeyi cyangwa umurezi",
   "This is used to prevent duplicate registrations for the same baby.": "Ibi bikoreshwa kugirango bitirinde kwandika inshuro ebyiri umurwayi umwe.",
   "Patient Already Registered": "Umurwayi Yari Waranditwe",
-  "National ID": "Indangamuntu",
   "A patient with this guardian ID, date of birth, and name is already registered.": "Umurwayi ufite iyi makuru yari waranditwe.",
   "Patient #:": "Nimero y'umurwayi:",
   "View Existing Patient": "Reba umurwayi waranditwe",
@@ -84,10 +81,10 @@ export const rw: Record<string, string> = {
   // ── New Referral ──
   "Create Referral": "Ohereza Ubutumwa",
   "Complete all required fields": "Uzuza ibisabwa byose",
-  "National ID": "Indangamuntu",
   "Guardian ID": "Indangamuntu ya umurezi",
   "Age": "Imyaka",
   "Address": "Aho atuye",
+  "Phone": "Telefoni",
   "Clinical Information": "Amakuru y'ubuvuzi",
   "Chief Complaint": "Ikibazo kinini",
   "Primary reason the patient is seeking care": "Impamvu nkuru umurwayi ashaka ubuvuzi",
@@ -167,10 +164,8 @@ export const rw: Record<string, string> = {
 
   // ── Referral Details ──
   "Medical History": "Amateka y'indwara",
-  "View Referral QR": "Reba QR y'ubutumwa",
-  "Retry Synchronization": "Gerageza guhuza nanone",
-  "Name:": "Izina:",
   "Vital Signs": "Ibimenyetso by'ingenzi",
+  "Name:": "Izina:",
   "BP:": "Umuvuduko:",
   "HR:": "Inshuro z'umutima:",
   "Temp:": "Ubushyuhe:",
@@ -179,6 +174,8 @@ export const rw: Record<string, string> = {
   "Priority:": "Urwego:",
   "Receiving Hospital:": "Ibitaro bikirira:",
   "Status:": "Imimerere:",
+  "View Referral QR": "Reba QR y'ubutumwa",
+  "Retry Synchronization": "Gerageza guhuza nanone",
   "Awaiting Hospital Review": "Bitegerejwe isuzuma ry'ibitaro",
   "The referral has been submitted and is awaiting review by the receiving hospital.": "Ubutumwa bwoherejwe kandi buritegerejwe isuzuma n'ibitaro bikirira.",
   "Patient Has Arrived": "Umurwayi Yarasoje",
@@ -199,7 +196,4 @@ export const rw: Record<string, string> = {
   "Cancel": "Hagarika",
   "Loading referral...": "Gutangira ubutumwa...",
   "Referral not found.": "Ubutumwa ntibubonetse.",
-  "Full Name": "Amazina yose",
-  "Phone": "Telefoni",
-  "Date:": "Itariki:",
 };

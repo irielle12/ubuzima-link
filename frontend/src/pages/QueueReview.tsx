@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Calendar,
   Building2,
-  User,
 } from "lucide-react";
 
 function QueueReview() {

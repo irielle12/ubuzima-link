@@ -12,8 +12,6 @@ import { getFacilityById } from "../../services/facilityApi";
 import { useNavigate } from "react-router-dom";
 import "../../styles/hospital.css";
 
-const TODAY = () => new Date().toDateString();
-
 function HospitalLayout() {
   const navigate = useNavigate();
   const location = useLocation();

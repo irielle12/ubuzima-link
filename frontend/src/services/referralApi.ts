@@ -296,6 +296,32 @@ export async function getFacilityStats() {
   return data;
 }
 
+export async function rejectReferral(id: number | string, rejectionReason: string) {
+  const response = await fetch(`${API_URL}/referrals/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify({ workflowStatus: "Rejected", rejectionReason }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+}
+
+export async function submitReferralFeedback(
+  id: number | string,
+  treatmentStatus: string,
+  hospitalNotes: string
+) {
+  const response = await fetch(`${API_URL}/referrals/${id}/close`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify({ treatmentStatus, hospitalNotes }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+}
+
 export async function closeReferral(
   id: number | string,
   treatmentStatus?: string,

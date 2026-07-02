@@ -9,7 +9,6 @@ function HospitalReports() {
 
   const total = queueData.length;
   const pending = queueData.filter((r: any) => r.workflow_status === "Pending Hospital Review").length;
-  const arrived = queueData.filter((r: any) => r.workflow_status === "Arrived").length;
   const closed = queueData.filter((r: any) => r.workflow_status === "Closed").length;
   const closedWithFeedback = queueData.filter((r: any) => r.workflow_status === "Closed" && r.hospital_notes).length;
   const closedNoFeedback = closed - closedWithFeedback;
