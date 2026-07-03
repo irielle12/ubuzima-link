@@ -156,6 +156,15 @@ export const rw: Record<string, string> = {
   "Retry": "Gerageza nanone",
 
   // ── Work Queue ──
+  "Manage referral workflow": "Gukurikirana amatumwa",
+  "Search patient, referral ID, status...": "Shakisha umurwayi, nimero y'ubutumwa, imimerere...",
+  "No matching referrals.": "Nta matumwa ahuye n'ibisabwa.",
+  "Pending Sync": "Bitegerejwe guhuza",
+  "Awaiting upload": "Bitegerejwe koherezwa",
+  "Awaiting hospital": "Bitegerejwe ibitaro",
+  "Unread updates": "Amakuru adashaguriwe",
+  "Closed": "Byarangiye",
+  "Completed cases": "Ibibazo byarangiranye",
   "Your submitted referrals": "Amatumwa warohereje",
   "No referrals in this status.": "Nta matumwa afite iki cyiciro.",
   "Pending Review": "Bitegerejwe isuzuma",
@@ -163,6 +172,9 @@ export const rw: Record<string, string> = {
   "Closed Referrals": "Amatumwa arangiye",
 
   // ── Referral Details ──
+  "Priority": "Urwego rw'ihutirwa",
+  "Status": "Imimerere",
+  "Date": "Itariki",
   "Medical History": "Amateka y'indwara",
   "Vital Signs": "Ibimenyetso by'ingenzi",
   "Name:": "Izina:",
@@ -190,6 +202,13 @@ export const rw: Record<string, string> = {
   "Medications": "Imiti",
   "Referral Closed": "Ubutumwa bwarangiye",
   "Treated — no detailed feedback provided.": "Bavuwe — nta bisubizo birambuye byatanzwe.",
+
+  // ── Profile ──
+  "Staff ID": "Indangamuntu y'umukozi",
+  "Role": "Inshingano",
+  "Facility": "Ivuriro",
+  "Email": "Imeli",
+  "Sign Out": "Sohoka",
 
   // ── General ──
   "Loading...": "Gutangira...",

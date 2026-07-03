@@ -18,6 +18,25 @@ const createReferral = async (req, res) => {
       actionTaken,
     } = req.body;
 
+    // Idempotency: if hospital already registered this referral from an offline QR
+    // scan, don't create a duplicate — return the existing record.
+    if (clientReferralNumber) {
+      const existing = await pool.query(
+        `SELECT id FROM referrals WHERE referral_number = $1 LIMIT 1`,
+        [clientReferralNumber]
+      );
+      if (existing.rows.length > 0) {
+        const full = await pool.query(
+          `SELECT r.*, p.first_name, p.last_name
+           FROM referrals r
+           LEFT JOIN patients p ON r.patient_id = p.id
+           WHERE r.id = $1`,
+          [existing.rows[0].id]
+        );
+        return res.status(200).json(full.rows[0]);
+      }
+    }
+
     const existingDraft = await pool.query(
       `
       SELECT id
@@ -590,6 +609,87 @@ const getHospitalQueue = async (req, res) => {
   }
 };
 
+const receiveOfflineReferral = async (req, res) => {
+  try {
+    const {
+      referralNumber,
+      patientName,
+      patientPhone,
+      patientGender,
+      chiefComplaint,
+      diagnosis,
+      urgency,
+      referringFacility,
+    } = req.body;
+
+    const hospitalFacilityId = req.user?.facilityId;
+
+    if (!referralNumber || !diagnosis) {
+      return res.status(400).json({ message: "referralNumber and diagnosis are required" });
+    }
+
+    // Idempotent: if already registered (e.g. button pressed twice), return existing.
+    const existingRef = await pool.query(
+      `SELECT r.*, p.first_name, p.last_name, p.gender, p.phone,
+              df.name AS destination_hospital
+       FROM referrals r
+       LEFT JOIN patients p ON r.patient_id = p.id
+       LEFT JOIN facilities df ON r.destination_facility_id = df.id
+       WHERE r.referral_number = $1
+       LIMIT 1`,
+      [referralNumber]
+    );
+    if (existingRef.rows.length > 0) {
+      return res.json(existingRef.rows[0]);
+    }
+
+    // Find patient by phone; create a stub record if not found.
+    let patientId = null;
+    if (patientPhone) {
+      const found = await pool.query(
+        `SELECT id FROM patients WHERE phone = $1 LIMIT 1`,
+        [patientPhone]
+      );
+      if (found.rows.length > 0) {
+        patientId = found.rows[0].id;
+      }
+    }
+
+    if (!patientId) {
+      const nameParts = (patientName || "Unknown").trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || "-";
+      const newPatient = await pool.query(
+        `INSERT INTO patients (patient_number, first_name, last_name, phone, gender)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        ["QR-" + Date.now(), firstName, lastName, patientPhone || null, patientGender || null]
+      );
+      patientId = newPatient.rows[0].id;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO referrals
+       (referral_number, patient_id, destination_facility_id,
+        diagnosis, urgency, workflow_status, sync_status, chief_complaint)
+       VALUES ($1, $2, $3, $4, $5, 'Pending Hospital Review', 'Pending', $6)
+       RETURNING *`,
+      [referralNumber, patientId, hospitalFacilityId || null, diagnosis, urgency || null, chiefComplaint || null]
+    );
+
+    await pool.query(
+      `INSERT INTO referral_events (referral_id, event_type, event_description)
+       VALUES ($1, $2, $3)`,
+      [result.rows[0].id, "QR Received", `Patient walked in with offline QR from ${referringFacility || "health post"}`]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to register offline referral" });
+  }
+};
+
 module.exports = {
   createReferral,
   getReferrals,
@@ -604,4 +704,5 @@ module.exports = {
   markArrived,
   updateInternalNotes,
   getHospitalQueue,
+  receiveOfflineReferral,
 };

@@ -5,6 +5,7 @@ import { getHospitals, getFacilityById, getHospitalCapacity } from "../services/
 import { getUser } from "../services/authApi";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
+import { User, CreditCard, Clock, UserCheck, Phone, MapPin } from "lucide-react";
 
 function calcAge(dob: string | undefined): string {
   if (!dob) return "—";
@@ -101,6 +102,45 @@ function NewReferral() {
 
     const destinationHospital = getHospitalName();
     const referralNumber = generateReferralNumber();
+
+    // Skip the network entirely when offline — go straight to QR flow.
+    // Don't rely on catch alone: local backends (dev) succeed even without internet.
+    if (!navigator.onLine) {
+      setSubmitting(true);
+      try {
+        const localRecord = {
+          id: "LOCAL-" + Date.now(),
+          patientId: String(patient.id),
+          referralNumber,
+          chiefComplaint, medicalHistory,
+          diagnosis,
+          vitalBp, vitalHeartRate, vitalTemperature, vitalRespiratoryRate, actionTaken,
+          urgency,
+          hospital: destinationHospital,
+          referringFacility: referringFacilityName,
+          referringProvider,
+          destinationFacilityId: String(destinationFacilityId),
+          workflowStatus: "Pending Sync" as const,
+          syncStatus: "Pending" as const,
+          synced: false,
+          time: new Date().toLocaleString(),
+          patientName, patientAge,
+          patientGender: patient.gender,
+          patientPhone: patient.phone,
+        };
+        await db.referrals.put(localRecord);
+        navigate("/qr-view", {
+          state: {
+            qrPayload: buildQrPayload(referralNumber, destinationHospital, false),
+            displayData: { referral: localRecord, patient, hospitalName: destinationHospital },
+            offline: true,
+          },
+        });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -201,35 +241,27 @@ function NewReferral() {
       </div>
 
       {/* ── 1. PATIENT INFORMATION ── */}
-      <div className="referral-card">
-        <p className="referral-card-title">{t("Patient Information")}</p>
+      <div className="referral-card" style={{ padding: 0, overflow: "hidden" }}>
+        <p className="referral-card-title" style={{ padding: "12px 16px 8px" }}>{t("Patient Information")}</p>
 
-        <div className="detail-row">
-          <strong>{t("Full Name")}</strong>
-          <span>{patientName || "—"}</span>
-        </div>
-        <div className="detail-row">
-          <strong>{patient.national_id ? t("National ID") : t("Guardian ID")}</strong>
-          <span>{patient.national_id || patient.guardian_national_id || "—"}</span>
-        </div>
-        <div className="detail-row">
-          <strong>{t("Age")}</strong>
-          <span>{patientAge}</span>
-        </div>
-        <div className="detail-row">
-          <strong>{t("Gender")}</strong>
-          <span>{patient.gender || "—"}</span>
-        </div>
-        <div className="detail-row">
-          <strong>{t("Phone")}</strong>
-          <span>{patient.phone || "—"}</span>
-        </div>
-        {address && (
-          <div className="detail-row">
-            <strong>{t("Address")}</strong>
-            <span>{address}</span>
+        {[
+          { icon: <User size={14} />, label: t("Full Name"), value: patientName || "—" },
+          { icon: <CreditCard size={14} />, label: patient.national_id ? t("National ID") : t("Guardian ID"), value: patient.national_id || patient.guardian_national_id || "—" },
+          { icon: <Clock size={14} />, label: t("Age"), value: patientAge },
+          { icon: <UserCheck size={14} />, label: t("Gender"), value: patient.gender || "—" },
+          { icon: <Phone size={14} />, label: t("Phone"), value: patient.phone || "—" },
+          ...(address ? [{ icon: <MapPin size={14} />, label: t("Address"), value: address }] : []),
+        ].map((row, i, arr) => (
+          <div key={row.label} style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "11px 16px",
+            borderBottom: i < arr.length - 1 ? "1px solid #f1f5f9" : "none",
+          }}>
+            <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
+            <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
           </div>
-        )}
+        ))}
       </div>
 
       {/* ── 2. CLINICAL INFORMATION ── */}

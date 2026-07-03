@@ -16,6 +16,7 @@ const {
   markArrived,
   updateInternalNotes,
   getHospitalQueue,
+  receiveOfflineReferral,
 } = require("../controllers/referralController");
 
 const { verifyToken } = require("../middleware/authMiddleware");
@@ -24,6 +25,12 @@ router.post(
   "/",
   verifyToken,
   createReferral
+);
+
+router.post(
+  "/receive-offline",
+  verifyToken,
+  receiveOfflineReferral
 );
 
 router.get(

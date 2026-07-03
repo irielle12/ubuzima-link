@@ -1,5 +1,4 @@
-const API_URL =
-  "http://localhost:5000/api";
+import API_URL from "./api";
 
 export async function login(
   staffId: string,

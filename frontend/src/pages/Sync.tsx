@@ -9,6 +9,9 @@ import {
   AlertCircle,
   Clock,
   Loader,
+  House,
+  FileText,
+  User,
 } from "lucide-react";
 import { db } from "../services/db";
 import { createReferral, updateReferralStatus } from "../services/referralApi";
@@ -262,86 +265,60 @@ function Sync() {
       )}
 
       {/* REFERRAL CARDS */}
-      <div className="queue-list">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {allReferrals.map((r) => {
           const state = cardStates[r.id] || "pending";
           const err = cardErrors[r.id];
 
+          const stateColors: Record<string, { color: string; bg: string }> = {
+            pending:  { color: "#64748b", bg: "#f8fafc" },
+            syncing:  { color: "#2563eb", bg: "#eff6ff" },
+            synced:   { color: "#16a34a", bg: "#f0fdf4" },
+            error:    { color: "#dc2626", bg: "#fef2f2" },
+          };
+          const sc = stateColors[state] || stateColors.pending;
+
           return (
-            <div key={r.id} className="queue-card">
+            <div key={r.id} style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
 
-              <div className="queue-top">
+              {/* top row: name + state badge */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "1px solid #f1f5f9" }}>
                 <div>
-                  <h3>{r.patientName || "Unknown patient"}</h3>
-                  <p className="muted">{r.referralNumber || r.id}</p>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{r.patientName || "Unknown patient"}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#94a3b8" }}>{r.referralNumber || r.id}</p>
                 </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {state === "pending" && (
-                    <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
-                      <Clock size={13} style={{ verticalAlign: "middle" }} />{" "}
-                      {t("Waiting")}
-                    </span>
-                  )}
-                  {state === "syncing" && (
-                    <span style={{ fontSize: 12, color: "#2563eb", fontWeight: 600 }}>
-                      <Loader size={13} style={{ verticalAlign: "middle", animation: "spin 1s linear infinite" }} />{" "}
-                      {t("Syncing...")}
-                    </span>
-                  )}
-                  {state === "synced" && (
-                    <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>
-                      <CheckCircle size={13} style={{ verticalAlign: "middle" }} />{" "}
-                      {t("Synced")}
-                    </span>
-                  )}
-                  {state === "error" && (
-                    <span style={{ fontSize: 12, color: "#dc2626", fontWeight: 600 }}>
-                      <AlertCircle size={13} style={{ verticalAlign: "middle" }} />{" "}
-                      {t("Failed")}
-                    </span>
-                  )}
-                </div>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: sc.color, background: sc.bg, padding: "4px 10px", borderRadius: 20 }}>
+                  {state === "pending"  && <Clock size={11} />}
+                  {state === "syncing"  && <Loader size={11} style={{ animation: "spin 1s linear infinite" }} />}
+                  {state === "synced"   && <CheckCircle size={11} />}
+                  {state === "error"    && <AlertCircle size={11} />}
+                  {t(state === "pending" ? "Waiting" : state === "syncing" ? "Syncing..." : state === "synced" ? "Synced" : "Failed")}
+                </span>
               </div>
 
-              <div className="queue-details" style={{ marginTop: 8 }}>
-                <div className="queue-item">
-                  <span
-                    className={`status-chip ${
-                      r.urgency === "Emergency" ? "emergency" : r.urgency === "Urgent" ? "urgent" : "routine"
-                    }`}
-                  >
-                    {r.urgency}
-                  </span>
-                </div>
-                <div className="queue-item">
-                  <span style={{ color: "#64748b" }}>→ {r.hospital}</span>
-                </div>
+              {/* urgency + destination */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
+                <span className={`status-chip ${r.urgency === "Emergency" ? "emergency" : r.urgency === "Urgent" ? "urgent" : "routine"}`}>
+                  {r.urgency}
+                </span>
+                <span style={{ fontSize: 13, color: "#64748b" }}>→ {r.hospital}</span>
               </div>
 
+              {/* diagnosis */}
               {r.diagnosis && (
-                <p style={{ margin: "8px 0 0", fontSize: 13, color: "#475569" }}>{r.diagnosis}</p>
+                <p style={{ margin: 0, padding: "10px 16px", fontSize: 13, color: "#475569", borderBottom: "1px solid #f1f5f9" }}>{r.diagnosis}</p>
               )}
 
+              {/* error message */}
               {err && (
-                <p style={{ marginTop: 6, fontSize: 12, color: "#dc2626" }}>{err}</p>
+                <p style={{ margin: 0, padding: "8px 16px", fontSize: 12, color: "#dc2626", background: "#fef2f2", borderBottom: "1px solid #fecaca" }}>{err}</p>
               )}
 
-              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+              {/* action buttons */}
+              <div style={{ display: "flex", gap: 8, padding: "10px 16px" }}>
                 <button
                   onClick={() => viewQr(r)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    padding: "6px 12px",
-                    fontSize: 13,
-                    borderRadius: 8,
-                    border: "1px solid #e2e8f0",
-                    background: "white",
-                    color: "#334155",
-                    cursor: "pointer",
-                  }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: "#334155", cursor: "pointer" }}
                 >
                   <QrCode size={13} />
                   {t("View QR")}
@@ -351,18 +328,7 @@ function Sync() {
                   <button
                     onClick={triggerSync}
                     disabled={!isOnline || globalSyncing}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "6px 12px",
-                      fontSize: 13,
-                      borderRadius: 8,
-                      border: "none",
-                      background: isOnline ? "#2563eb" : "#94a3b8",
-                      color: "white",
-                      cursor: !isOnline || globalSyncing ? "not-allowed" : "pointer",
-                    }}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "none", background: isOnline ? "#2563eb" : "#94a3b8", color: "white", cursor: !isOnline || globalSyncing ? "not-allowed" : "pointer" }}
                   >
                     <RefreshCw size={13} />
                     {t("Retry")}
@@ -374,6 +340,22 @@ function Sync() {
           );
         })}
       </div>
+
+      {/* BOTTOM NAV */}
+      <nav className="bottom-nav-v2">
+        <button className="nav-button" onClick={() => navigate("/dashboard")}>
+          <House size={20} /><span>{t("Home")}</span>
+        </button>
+        <button className="nav-button" onClick={() => navigate("/referrals")}>
+          <FileText size={20} /><span>{t("Work Queue")}</span>
+        </button>
+        <button className="nav-button active">
+          <Wifi size={20} /><span>{t("Sync")}</span>
+        </button>
+        <button className="nav-button" onClick={() => navigate("/profile")}>
+          <User size={20} /><span>{t("Profile")}</span>
+        </button>
+      </nav>
 
     </div>
   );

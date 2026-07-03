@@ -146,47 +146,41 @@ function QRView() {
       </div>
 
       {/* PATIENT + REFERRAL SUMMARY */}
-      <div className="details-card">
-        <h3>{t("Summary")}</h3>
-
-        <div className="detail-row">
-          <strong>{t("Patient:")}</strong>
-          <span>{qrPayload.patientName}</span>
-        </div>
-
-        {qrPayload.patientAge && (
-          <div className="detail-row">
-            <strong>{t("Age:")}</strong>
-            <span>{qrPayload.patientAge}</span>
+      <div style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: 12 }}>
+        <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+          {t("Summary")}
+        </p>
+        {[
+          { label: t("Patient:"), value: qrPayload.patientName },
+          ...(qrPayload.patientAge ? [{ label: t("Age:"), value: qrPayload.patientAge }] : []),
+          { label: t("Diagnosis:"), value: qrPayload.diagnosis },
+          { label: t("Urgency:"), value: qrPayload.urgency },
+          { label: t("To:"), value: qrPayload.destinationHospital },
+          { label: t("Date:"), value: qrPayload.referralDate },
+        ].map((row, i, arr) => (
+          <div key={row.label} style={{ display: "flex", alignItems: "center", padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+            <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right", maxWidth: "60%" }}>{row.value}</span>
           </div>
-        )}
-
-        <div className="detail-row">
-          <strong>{t("Diagnosis:")}</strong>
-          <span>{qrPayload.diagnosis}</span>
-        </div>
-
-        <div className="detail-row">
-          <strong>{t("Urgency:")}</strong>
-          <span>{qrPayload.urgency}</span>
-        </div>
-
-        <div className="detail-row">
-          <strong>{t("To:")}</strong>
-          <span>{qrPayload.destinationHospital}</span>
-        </div>
-
-        <div className="detail-row">
-          <strong>{t("Date:")}</strong>
-          <span>{qrPayload.referralDate}</span>
-        </div>
+        ))}
       </div>
 
       {/* RETURN */}
       <button
-        className="secondary-action-btn"
         onClick={() => navigate("/dashboard")}
-        style={{ marginTop: 8 }}
+        style={{
+          width: "100%",
+          padding: "13px",
+          borderRadius: 12,
+          border: "1px solid #e2e8f0",
+          background: "white",
+          color: "#334155",
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: "pointer",
+          marginTop: 4,
+          marginBottom: 8,
+        }}
       >
         {t("Return to Dashboard")}
       </button>

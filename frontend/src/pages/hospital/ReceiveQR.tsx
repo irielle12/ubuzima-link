@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getReferralByNumber, updateReferralStatus } from "../../services/referralApi";
+import { getReferralByNumber, updateReferralStatus, receiveOfflineReferral } from "../../services/referralApi";
 import { getUser } from "../../services/authApi";
 
 type ResultState =
@@ -37,6 +37,8 @@ function ReceiveQR() {
   const [cameraError, setCameraError] = useState("");
   const [scanFlash, setScanFlash] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState("");
 
   const scannerRef = useRef<any>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
@@ -194,6 +196,31 @@ function ReceiveQR() {
   const checkAgain = () => {
     if (result.type === "unsynced") {
       lookup(result.payload.referralNumber, result.payload);
+    }
+  };
+
+  const handleAcceptFromQR = async () => {
+    if (result.type !== "unsynced") return;
+    setAccepting(true);
+    setAcceptError("");
+    try {
+      await receiveOfflineReferral({
+        referralNumber: result.payload.referralNumber,
+        patientName: result.payload.patientName,
+        patientPhone: result.payload.patientPhone,
+        patientGender: result.payload.patientGender,
+        patientAge: result.payload.patientAge,
+        chiefComplaint: result.payload.chiefComplaint,
+        diagnosis: result.payload.diagnosis,
+        urgency: result.payload.urgency,
+        referringFacility: result.payload.referringFacility,
+        referralDate: result.payload.referralDate,
+      });
+      navigate("/hospital/queue");
+    } catch (err: any) {
+      setAcceptError(err.message || "Failed to register patient.");
+    } finally {
+      setAccepting(false);
     }
   };
 
@@ -498,10 +525,10 @@ function ReceiveQR() {
                 }}
               >
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#c2410c" }}>
-                  ⚠ Referral not yet synced to server
+                  Referral not yet synced — patient present
                 </p>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "#9a3412" }}>
-                  Showing data from QR code only. It will appear in your queue once the health post syncs.
+                  Accept the patient now to add them to your queue. The full record will merge once the health post syncs.
                 </p>
               </div>
               <div style={{ padding: 20 }}>
@@ -523,17 +550,34 @@ function ReceiveQR() {
                       <span>{value}</span>
                     </div>
                   ))}
+
+                {acceptError && (
+                  <p style={{ color: "#dc2626", fontSize: 12, margin: "12px 0 0" }}>{acceptError}</p>
+                )}
+
+                <button
+                  className="hospital-action-btn primary"
+                  style={{ marginTop: 16, width: "100%" }}
+                  onClick={handleAcceptFromQR}
+                  disabled={accepting}
+                >
+                  {accepting ? "Registering patient…" : "Accept Patient & Open in Queue →"}
+                </button>
+
                 <button
                   className="hospital-action-btn secondary"
-                  style={{ marginTop: 16, width: "100%" }}
+                  style={{ marginTop: 8, width: "100%" }}
                   onClick={checkAgain}
+                  disabled={accepting}
                 >
-                  Check Again
+                  Check Again (if recently synced)
                 </button>
+
                 <button
                   className="hospital-action-btn secondary"
                   style={{ marginTop: 8, width: "100%" }}
                   onClick={reset}
+                  disabled={accepting}
                 >
                   Scan Another
                 </button>

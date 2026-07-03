@@ -1,6 +1,7 @@
 import { authHeader } from "./authApi";
 
-const API_URL = "http://localhost:5000/api/admin";
+import _BASE_URL from "./api";
+const API_URL = _BASE_URL + "/admin";
 
 async function handle(response: Response) {
   const data = await response.json();

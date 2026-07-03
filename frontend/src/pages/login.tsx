@@ -26,15 +26,6 @@ function Login() {
     }
   };
 
-  const getSubtitle = () => {
-    switch (role) {
-      case "admin":
-        return "Access your administrator account";
-      default:
-        return "Access your health worker account";
-    }
-  };
-
   const handleLogin = async () => {
     if (!workerId || !password) return;
 
@@ -72,10 +63,6 @@ function Login() {
         <h2 style={{ margin: "0 0 20px", fontSize: 17, color: "#0f172a" }}>
           {getTitle()}
         </h2>
-
-        <p style={{ margin: "0 0 20px", fontSize: 13, color: "#64748b" }}>
-          {getSubtitle()}
-        </p>
 
         <label>Staff ID</label>
         <input

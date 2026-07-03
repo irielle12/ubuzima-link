@@ -1,6 +1,7 @@
 import { authHeader } from "./authApi";
 
-const API_URL = "http://localhost:5000/api/referrals";
+import _BASE_URL from "./api";
+const API_URL = _BASE_URL + "/referrals";
 
 export async function createReturnReferral(
   referralId: number | string,

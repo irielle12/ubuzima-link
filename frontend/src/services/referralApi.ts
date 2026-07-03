@@ -1,7 +1,6 @@
 import { authHeader } from "./authApi";
 
-const API_URL =
-  "http://localhost:5000/api";
+import API_URL from "./api";
 
 export async function createReferral(
   referral: any
@@ -316,6 +315,28 @@ export async function submitReferralFeedback(
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ treatmentStatus, hospitalNotes }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+}
+
+export async function receiveOfflineReferral(payload: {
+  referralNumber: string;
+  patientName?: string;
+  patientPhone?: string;
+  patientGender?: string;
+  patientAge?: string;
+  chiefComplaint?: string;
+  diagnosis: string;
+  urgency?: string;
+  referringFacility?: string;
+  referralDate?: string;
+}) {
+  const response = await fetch(`${API_URL}/referrals/receive-offline`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify(payload),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.message);

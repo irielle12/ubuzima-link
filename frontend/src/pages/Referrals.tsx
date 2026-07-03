@@ -4,6 +4,7 @@ import { db } from "../services/db";
 import { getReferralsBySource } from "../services/referralApi";
 import { getUser } from "../services/authApi";
 import ConnectionStatus from "../components/ConnectionStatus";
+import { useLanguage } from "../contexts/LanguageContext";
 
 import {
   House,
@@ -26,6 +27,7 @@ function hasFeedback(r: any) {
 
 function Referrals() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [searchTerm, setSearchTerm] =
     useState("");
@@ -130,13 +132,8 @@ function Referrals() {
 
         <div>
 
-          <h1>
-            Work Queue
-          </h1>
-
-          <p>
-            Manage referral workflow
-          </p>
+          <h1>{t("Work Queue")}</h1>
+          <p>{t("Manage referral workflow")}</p>
 
           <ConnectionStatus />
 
@@ -154,7 +151,7 @@ function Referrals() {
 
           <input
             type="text"
-            placeholder="Search patient, referral ID, status..."
+            placeholder={t("Search patient, referral ID, status...")}
             value={searchTerm}
             onChange={(e) =>
               setSearchTerm(
@@ -174,7 +171,7 @@ function Referrals() {
 
           {searchResults.length === 0 && (
             <div className="details-card">
-              <h3>No matching referrals.</h3>
+              <h3>{t("No matching referrals.")}</h3>
             </div>
           )}
 
@@ -220,7 +217,7 @@ function Referrals() {
             onClick={loadQueueData}
             style={{ marginTop: 10 }}
           >
-            <RefreshCw size={14} /> Retry
+            <RefreshCw size={14} /> {t("Retry")}
           </button>
         </div>
       )}
@@ -241,13 +238,8 @@ function Referrals() {
               {pendingSync}
             </h3>
 
-            <p>
-              Pending Sync
-            </p>
-
-            <small>
-              Awaiting upload
-            </small>
+            <p>{t("Pending Sync")}</p>
+            <small>{t("Awaiting upload")}</small>
 
           </div>
 
@@ -262,13 +254,8 @@ function Referrals() {
               {loading ? "—" : pendingReview}
             </h3>
 
-            <p>
-              Pending Review
-            </p>
-
-            <small>
-              Awaiting hospital
-            </small>
+            <p>{t("Pending Review")}</p>
+            <small>{t("Awaiting hospital")}</small>
 
           </div>
 
@@ -283,13 +270,8 @@ function Referrals() {
               {loading ? "—" : feedbackReceived}
             </h3>
 
-            <p>
-              Feedback Received
-            </p>
-
-            <small>
-              Unread updates
-            </small>
+            <p>{t("Feedback Received")}</p>
+            <small>{t("Unread updates")}</small>
 
           </div>
 
@@ -304,13 +286,8 @@ function Referrals() {
               {loading ? "—" : closed}
             </h3>
 
-            <p>
-              Closed
-            </p>
-
-            <small>
-              Completed cases
-            </small>
+            <p>{t("Closed")}</p>
+            <small>{t("Completed cases")}</small>
 
           </div>
 
@@ -330,50 +307,19 @@ function Referrals() {
 
           <House size={20} />
 
-          <span>
-            Home
-          </span>
-
+          <span>{t("Home")}</span>
         </button>
-
         <button className="nav-button active">
-
           <FileText size={20} />
-
-          <span>
-            Work Queue
-          </span>
-
+          <span>{t("Work Queue")}</span>
         </button>
-
-        <button
-          className="nav-button"
-          onClick={() =>
-            navigate("/sync")
-          }
-        >
-
+        <button className="nav-button" onClick={() => navigate("/sync")}>
           <Wifi size={20} />
-
-          <span>
-            Sync
-          </span>
-
+          <span>{t("Sync")}</span>
         </button>
-
-        <button
-          className="nav-button"
-          onClick={() =>
-            navigate("/profile")
-          }
-        >
-
+        <button className="nav-button" onClick={() => navigate("/profile")}>
           <User size={20} />
-
-          <span>
-            Profile
-          </span>
-
+          <span>{t("Profile")}</span>
         </button>
 
       </nav>

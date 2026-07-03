@@ -1,5 +1,4 @@
-const API_URL =
-  "http://localhost:5000/api";
+import API_URL from "./api";
 
 export interface PatientDuplicate {
   id: number;

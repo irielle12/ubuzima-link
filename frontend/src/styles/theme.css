@@ -1498,22 +1498,7 @@
   margin-top: 12px;
 }
 
-.primary-action-btn {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.secondary-action-btn {
-  background: #f3f4f6;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}
+/* duplicate overrides removed — canonical definitions are above */
 /* SEARCH BAR */
 .search-bar-card {
   padding: 10px;

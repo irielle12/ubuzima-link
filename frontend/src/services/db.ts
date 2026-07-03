@@ -31,6 +31,7 @@ export interface Referral {
     | "Pending Sync"
     | "Pending Hospital Review"
     | "Acknowledged"
+    | "Arrived"
     | "Feedback Received"
     | "Closed";
   syncStatus: "Pending" | "Synced";
