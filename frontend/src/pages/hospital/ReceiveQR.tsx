@@ -39,6 +39,7 @@ function ReceiveQR() {
   const [showHint, setShowHint] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState("");
+  const [refInput, setRefInput] = useState("");
 
   const scannerRef = useRef<any>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
@@ -193,6 +194,12 @@ function ReceiveQR() {
     }
   };
 
+  const handleRefSearch = () => {
+    const referralNumber = refInput.trim();
+    if (!referralNumber) return;
+    lookup(referralNumber);
+  };
+
   const checkAgain = () => {
     if (result.type === "unsynced") {
       lookup(result.payload.referralNumber, result.payload);
@@ -229,6 +236,7 @@ function ReceiveQR() {
     setCameraError("");
     setScanFlash(false);
     setShowHint(false);
+    setRefInput("");
   };
 
   return (
@@ -365,6 +373,45 @@ function ReceiveQR() {
               </div>
             )}
           </div>
+
+          {/* SEARCH BY REFERENCE NUMBER */}
+          <div
+            style={{
+              background: "white",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              padding: 24,
+              marginTop: 20,
+            }}
+          >
+            <h2 style={{ margin: "0 0 4px", fontSize: 16, color: "#0f172a" }}>
+              Search by Reference Number
+            </h2>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: "#64748b" }}>
+              If the QR code can't be scanned, look up the referral by its reference number instead.
+            </p>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="hospital-filter-input"
+                placeholder="e.g. REF-1234567890"
+                value={refInput}
+                onChange={(e) => setRefInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleRefSearch();
+                }}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <button
+                className="hospital-action-btn primary"
+                onClick={handleRefSearch}
+                disabled={!refInput.trim() || result.type === "loading"}
+                style={{ width: "auto", flexShrink: 0 }}
+              >
+                Search
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT — RESULT */}
@@ -381,7 +428,7 @@ function ReceiveQR() {
               }}
             >
               <p style={{ fontSize: 14 }}>
-                Scan a patient's QR code to see the referral here.
+                Scan a patient's QR code or search by reference number to see the referral here.
               </p>
             </div>
           )}

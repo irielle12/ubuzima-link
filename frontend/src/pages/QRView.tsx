@@ -12,14 +12,12 @@ function QRView() {
   const state: any = location.state;
 
   const [qrPayload, setQrPayload] = useState<any>(null);
-  const [isOffline, setIsOffline] = useState(false);
 
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (state?.qrPayload) {
       setQrPayload(state.qrPayload);
-      setIsOffline(!!state.offline);
     } else {
       loadFromDexie();
     }
@@ -45,7 +43,6 @@ function QRView() {
     };
 
     setQrPayload(payload);
-    setIsOffline(!payload.synced);
   };
 
   const qrString = qrPayload ? JSON.stringify(qrPayload) : "";
@@ -82,28 +79,6 @@ function QRView() {
           <p>{qrPayload.referralNumber}</p>
         </div>
       </div>
-
-      {/* OFFLINE NOTICE */}
-      {isOffline && (
-        <div
-          className="details-card"
-          style={{
-            background: "#fef3c7",
-            border: "1px solid #f59e0b",
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-          }}
-        >
-          <span style={{ fontSize: 20 }}>⚠️</span>
-          <div>
-            <strong>{t("Created offline")}</strong>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#92400e" }}>
-              {t("This referral will sync automatically when connected. The QR code is valid for hospital use in the meantime.")}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* QR CODE */}
       <div className="details-card" style={{ textAlign: "center", padding: 28 }} ref={qrRef}>

@@ -49,15 +49,14 @@ function Profile() {
   return (
     <div className="patient-search-page">
 
-      {/* TOP BAR */}
-      <div style={{ display: "flex", alignItems: "center", padding: "16px 16px 8px", gap: 12 }}>
-        <button
-          onClick={() => navigate("/dashboard")}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#64748b", display: "flex" }}
-        >
+      {/* HEADER */}
+      <div className="patient-header">
+        <button className="back-btn-v2" onClick={() => navigate("/dashboard")}>
           <ArrowLeft size={20} />
         </button>
-        <span style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{t("Profile")}</span>
+        <div>
+          <h1>{t("Profile")}</h1>
+        </div>
       </div>
 
       {/* AVATAR + NAME */}
@@ -112,8 +111,8 @@ function Profile() {
           onClick={handleLogout}
           style={{
             width: "100%", padding: "13px",
-            borderRadius: 12, border: "1px solid #fecaca",
-            background: "white", color: "#dc2626",
+            borderRadius: 12, border: "1px solid #bfdbfe",
+            background: "white", color: "#2563eb",
             fontSize: 14, fontWeight: 600,
             cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,

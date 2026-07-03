@@ -58,6 +58,9 @@ function Dashboard() {
   const [staleSyncCount, setStaleSyncCount] =
     useState(0);
 
+  const [pendingSyncCount, setPendingSyncCount] =
+    useState(0);
+
   const [lastSyncAttempt, setLastSyncAttempt] =
     useState<{ timestamp: number; success: boolean } | null>(null);
 
@@ -105,9 +108,9 @@ function Dashboard() {
       const now = Date.now();
       const thresholdMs = STALE_SYNC_THRESHOLD_HOURS * 60 * 60 * 1000;
 
-      const stale = local.filter((r) => {
-        if (r.workflowStatus !== "Pending Sync") return false;
+      const pending = local.filter((r) => r.workflowStatus === "Pending Sync");
 
+      const stale = pending.filter((r) => {
         const created = new Date(r.time).getTime();
 
         if (Number.isNaN(created)) return false;
@@ -115,6 +118,7 @@ function Dashboard() {
         return now - created > thresholdMs;
       });
 
+      setPendingSyncCount(pending.length);
       setStaleSyncCount(stale.length);
     } catch (err) {
       console.error(err);
@@ -342,12 +346,39 @@ function Dashboard() {
 
   <h2>{t("Sync Alerts")}</h2>
 
-  {staleSyncCount === 0 &&
+  {pendingSyncCount === 0 &&
+    staleSyncCount === 0 &&
     !(lastSyncAttempt && !lastSyncAttempt.success) &&
     !offlineSince && (
     <div className="details-card">
       <p>{t("No active network alerts.")}</p>
     </div>
+  )}
+
+  {pendingSyncCount > 0 && (
+
+    <div className="details-card alert-card warning">
+
+      <AlertTriangle size={18} />
+
+      <div>
+
+        <p>
+          You have {pendingSyncCount} unsynced referral{pendingSyncCount === 1 ? "" : "s"}. Please sync.
+        </p>
+
+        <button
+          className="secondary-action-btn"
+          onClick={() => navigate("/sync")}
+          style={{ marginTop: 10 }}
+        >
+          {t("Sync Now")}
+        </button>
+
+      </div>
+
+    </div>
+
   )}
 
   {staleSyncCount > 0 && (

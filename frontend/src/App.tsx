@@ -76,7 +76,8 @@ function App() {
   }
 >
   <Route index element={<Navigate to="queue" replace />} />
-  <Route path="queue" element={<HospitalQueue />} />
+  <Route path="queue" element={<HospitalQueue scope="active" />} />
+  <Route path="closed" element={<HospitalQueue scope="closed" />} />
   <Route path="receive-qr" element={<ReceiveQR />} />
   <Route path="reports" element={<HospitalReports />} />
 </Route>

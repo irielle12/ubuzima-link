@@ -294,7 +294,7 @@
 }
 
 .connection-status {
-  display: inline-flex;
+  display: flex;
 
   align-items: center;
 
@@ -305,6 +305,12 @@
   font-size: 14px;
 
   font-weight: 500;
+
+  margin-top: 6px;
+}
+
+.connection-status.offline {
+  color: #dc2626;
 }
 
 .dashboard-section {
@@ -342,15 +348,25 @@
 
   align-items: center;
 
+  justify-content: center;
+
   gap: 12px;
+
+  min-height: 120px;
+
+  color: #1e293b;
 
   cursor: pointer;
 }
 
 .action-card span {
+  color: #1e293b;
+
   font-size: 14px;
 
   font-weight: 600;
+
+  text-align: center;
 }
 
 .overview-card {
@@ -451,42 +467,53 @@
 
 .patient-header {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 
-  align-items: flex-start;
+  align-items: center;
 
-  margin-bottom: 24px;
+  margin-bottom: 15px;
 }
 
 .back-btn-v2 {
-  border: none;
+  border: 1px solid #e5e7eb;
 
   background: white;
 
   width: 42px;
   height: 42px;
+  padding: 8px;
 
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  color: #1f2937;
 
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.back-btn-v2:hover {
+  background: #f3f4f6;
 }
 
 .patient-header h1 {
   margin: 0;
 
-  color: #0f172a;
+  color: #1f2a37;
 
-  font-size: 24px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .patient-header p {
-  margin-top: 6px;
+  margin: 2px 0;
 
-  color: #64748b;
+  color: #6b7280;
 
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .search-card {
@@ -651,13 +678,13 @@
 .details-card {
   background: white;
 
-  border-radius: 18px;
+  border-radius: 12px;
 
-  padding: 22px;
+  padding: 10px;
 
   margin-bottom: 18px;
 
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .details-card h3 {
@@ -799,6 +826,7 @@
 
 .primary-action-btn {
   width: 100%;
+  height: 52px;
 
   border: none;
 
@@ -812,7 +840,7 @@
 
   color: white;
 
-  font-size: 16px;
+  font-size: 15px;
 
   font-weight: 600;
 
@@ -824,26 +852,6 @@
   gap: 12px;
 
   margin-top: 20px;
-}
-
-.primary-action-btn {
-  width: 100%;
-
-  height: 52px;
-
-  border: none;
-
-  border-radius: 14px;
-
-  background: #2563eb;
-
-  color: white;
-
-  font-size: 15px;
-
-  font-weight: 600;
-
-  cursor: pointer;
 }
 
 .secondary-action-btn {
@@ -899,9 +907,13 @@
 }
 
 .status-chip {
-  padding: 8px 12px;
+  display: inline-block;
+  width: fit-content;
+  margin-top: 12px;
 
-  border-radius: 999px;
+  padding: 4px 10px;
+
+  border-radius: 20px;
 
   background: #f1f5f9;
 
@@ -958,41 +970,7 @@
   align-items: center;
   justify-content: center;
 }
-.action-card {
-  background: white;
-
-  border: 1px solid #e2e8f0;
-
-  border-radius: 16px;
-
-  padding: 20px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  min-height: 120px;
-
-  color: #1e293b;
-
-  cursor: pointer;
-}
-
-.action-card span {
-  color: #1e293b;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  text-align: center;
-}
+/* duplicate .action-card / .action-card span overrides removed — canonical definitions are above */
 
 .action-card svg {
   color: #2563eb;
@@ -1176,21 +1154,22 @@
 .queue-card {
   background: white;
 
-  border: 1px solid #e2e8f0;
+  border: 1px solid #eef2f7;
 
-  border-radius: 16px;
+  border-radius: 12px;
 
-  padding: 24px;
+  padding: 14px;
 
   text-align: center;
 
   cursor: pointer;
 
-  transition: 0.2s;
+  transition: 0.2s ease;
 }
 
 .queue-card:hover {
   transform: translateY(-2px);
+  border-color: #d6e4ff;
 }
 .queue-card h3 {
   font-size: 28px;
@@ -1207,21 +1186,7 @@
 
   font-size: 14px;
 }
-.connection-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  color: #16a34a;
-
-  font-size: 14px;
-
-  margin-top: 6px;
-}
-
-.connection-status.offline {
-  color: #dc2626;
-}
+/* duplicate .connection-status / .connection-status.offline overrides removed — canonical definitions are above */
 .referral-list-card {
   background: white;
 
@@ -1244,13 +1209,7 @@
   margin-bottom: 4px;
 }
 
-.status-chip {
-  display: inline-block;
-
-  width: fit-content;
-
-  margin-top: 12px;
-}
+/* duplicate .status-chip override removed — canonical definition is above */
 .hospital-alert-card {
   display: flex;
 
@@ -1288,53 +1247,7 @@
 
   margin-top: 6px;
 }
-.patient-search-page {
-  padding: 20px;
-  background: #f5f7fb;
-  min-height: 100vh;
-}
-
-/* HEADER */
-.patient-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  margin-bottom: 15px;
-}
-
-.patient-header h1 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
-  color: #1f2a37;
-}
-
-.patient-header p {
-  margin: 2px 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* BACK BUTTON */
-.back-btn-v2 {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #1f2937;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.back-btn-v2:hover {
-  background: #f3f4f6;
-}
+/* duplicate .patient-search-page / .patient-header / .back-btn-v2 overrides removed — canonical definitions are above */
 
 /* ACTIVE REFERRAL BANNER */
 .risk-banner {
@@ -1385,14 +1298,7 @@
   color: #6b7280;
 }
 
-/* DETAILS CARD */
-.details-card {
-  background: white;
-  padding: 10px;
-  border-radius: 12px;
-
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
+/* duplicate .details-card override removed — canonical definition is above */
 
 /* REFERRAL ROW */
 .history-row {
@@ -1525,21 +1431,7 @@
   margin-top: 10px;
 }
 
-/* MAIN CARD */
-.queue-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  cursor: pointer;
-
-  border: 1px solid #eef2f7;
-  transition: 0.2s ease;
-}
-
-.queue-card:hover {
-  transform: translateY(-2px);
-  border-color: #d6e4ff;
-}
+/* duplicate .queue-card override removed — canonical definition is above */
 
 /* TOP ROW */
 .queue-top {
@@ -1577,14 +1469,4 @@
   color: #6b7280;
 }
 
-/* STATUS CHIP (reuse pattern) */
-.status-chip {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-}
-
-.status-chip.review {
-  background: #fff3cd;
-  color: #856404;
-}
+/* duplicate .status-chip / .status-chip.review overrides removed — canonical definitions are above */

@@ -51,15 +51,14 @@ function PatientProfile() {
   return (
     <div className="patient-search-page" style={{ background: "#f1f5f9" }}>
 
-      {/* TOP BAR */}
-      <div style={{ display: "flex", alignItems: "center", padding: "16px 16px 8px", gap: 12 }}>
-        <button
-          onClick={() => navigate("/patient-search")}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#64748b", display: "flex" }}
-        >
+      {/* HEADER */}
+      <div className="patient-header">
+        <button className="back-btn-v2" onClick={() => navigate("/patient-search")}>
           <ArrowLeft size={20} />
         </button>
-        <span style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{t("Patient Profile")}</span>
+        <div>
+          <h1>{t("Patient Profile")}</h1>
+        </div>
       </div>
 
       {/* AVATAR + NAME */}

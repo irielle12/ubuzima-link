@@ -5,6 +5,7 @@ import {
   BarChart2,
   LogOut,
   QrCode,
+  CheckCircle2,
 } from "lucide-react";
 import { getUser, logout } from "../../services/authApi";
 import { getHospitalQueue } from "../../services/referralApi";
@@ -49,6 +50,10 @@ function HospitalLayout() {
     (r) => r.workflow_status === "Pending Hospital Review"
   ).length;
 
+  const closedCount = queueData.filter(
+    (r) => r.workflow_status === "Closed"
+  ).length;
+
   const handleLogout = () => {
     logout();
     navigate("/hospital/login");
@@ -56,6 +61,7 @@ function HospitalLayout() {
 
   const pageTitle: Record<string, string> = {
     "/hospital/queue": "Referral Queue",
+    "/hospital/closed": "Closed Referrals",
     "/hospital/receive-qr": "Receive QR Referral",
     "/hospital/reports": "My Reports",
   };
@@ -84,6 +90,21 @@ function HospitalLayout() {
             </span>
             {pendingCount > 0 && (
               <span className="hospital-nav-badge">{pendingCount}</span>
+            )}
+          </NavLink>
+
+          <NavLink
+            to="/hospital/closed"
+            className={({ isActive }) =>
+              `hospital-nav-item${isActive ? " active" : ""}`
+            }
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <CheckCircle2 size={17} />
+              Closed Referrals
+            </span>
+            {closedCount > 0 && (
+              <span className="hospital-nav-badge muted">{closedCount}</span>
             )}
           </NavLink>
 

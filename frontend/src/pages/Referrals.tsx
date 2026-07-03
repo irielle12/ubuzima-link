@@ -13,6 +13,7 @@ import {
   User,
   RefreshCw,
   Search,
+  Bell,
 } from "lucide-react";
 
 function getUrgencyClass(urgency: string) {
@@ -96,6 +97,19 @@ function Referrals() {
 
   const feedbackReceived = referrals.filter(hasFeedback).length;
 
+  const user = getUser();
+  const seenClosedCount = user?.facilityId
+    ? parseInt(localStorage.getItem(`seenClosedCount_${user.facilityId}`) || "0", 10)
+    : 0;
+  const unseenClosed = Math.max(0, closed - seenClosedCount);
+
+  const handleBellClick = () => {
+    if (user?.facilityId) {
+      localStorage.setItem(`seenClosedCount_${user.facilityId}`, closed.toString());
+    }
+    navigate("/work-queue/closed");
+  };
+
   const search = searchTerm.trim().toLowerCase();
 
   const searchResults = search
@@ -119,24 +133,40 @@ function Referrals() {
 
       {/* HEADER */}
 
-      <div className="patient-header">
+      <div className="patient-header" style={{ justifyContent: "space-between" }}>
 
-        <button
-          className="back-btn-v2"
-          onClick={() =>
-            navigate("/dashboard")
-          }
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+
+          <button
+            className="back-btn-v2"
+            onClick={() =>
+              navigate("/dashboard")
+            }
+          >
+            ←
+          </button>
+
+          <div>
+
+            <h1>{t("Work Queue")}</h1>
+            <p>{t("Manage referral workflow")}</p>
+
+            <ConnectionStatus />
+
+          </div>
+
+        </div>
+
+        <div
+          className="notification-bell"
+          onClick={handleBellClick}
+          style={{ cursor: "pointer" }}
+          title={t("View hospital updates")}
         >
-          ←
-        </button>
-
-        <div>
-
-          <h1>{t("Work Queue")}</h1>
-          <p>{t("Manage referral workflow")}</p>
-
-          <ConnectionStatus />
-
+          <Bell size={20} />
+          {unseenClosed > 0 && (
+            <span className="notification-count">{unseenClosed}</span>
+          )}
         </div>
 
       </div>

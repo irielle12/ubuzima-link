@@ -27,9 +27,13 @@ function calcAge(dob: string | undefined): string {
   return isNaN(y) ? "—" : `${y} yrs`;
 }
 
-function HospitalQueue() {
+function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
   const { queueData = [], queueLoading = false, loadQueue } =
     (useOutletContext() as any) || {};
+
+  const scopedData = queueData.filter((r: any) =>
+    scope === "closed" ? r.workflow_status === "Closed" : r.workflow_status !== "Closed"
+  );
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
@@ -146,7 +150,7 @@ function HospitalQueue() {
     Closed: 3,
   };
 
-  const rows = queueData
+  const rows = scopedData
     .filter((r: any) => {
       if (statusFilter !== "all" && r.workflow_status !== statusFilter)
         return false;
@@ -178,11 +182,14 @@ function HospitalQueue() {
       return 0;
     });
 
-  const STATUSES: { value: string; label: string }[] = [
-    { value: "all", label: "All Statuses" },
-    { value: "Pending Hospital Review", label: "Pending Hospital Review" },
-    { value: "Closed", label: "Closed" },
-  ];
+  const STATUSES: { value: string; label: string }[] =
+    scope === "closed"
+      ? []
+      : [
+          { value: "all", label: "All Statuses" },
+          { value: "Pending Hospital Review", label: "Pending Hospital Review" },
+          { value: "Arrived", label: "Arrived" },
+        ];
 
   const status = selected?.workflow_status;
 
@@ -197,17 +204,19 @@ function HospitalQueue() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select
-          className="hospital-filter-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        {STATUSES.length > 0 && (
+          <select
+            className="hospital-filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            {STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        )}
 
         <select
           className="hospital-filter-select"

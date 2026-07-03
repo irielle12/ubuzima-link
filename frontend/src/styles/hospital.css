@@ -100,6 +100,10 @@
   text-align: center;
 }
 
+.hospital-nav-badge.muted {
+  background: #475569;
+}
+
 .hospital-sidebar-footer {
   padding: 16px;
   border-top: 1px solid #1e293b;

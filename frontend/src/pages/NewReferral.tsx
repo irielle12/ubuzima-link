@@ -155,7 +155,15 @@ function NewReferral() {
         referralNumber,
       });
 
-      await updateReferralStatus(referral.id, "Pending Hospital Review");
+      // Only promote Draft → Pending Hospital Review. If createReferral returned
+      // an already-existing referral (idempotent retry), it may have already
+      // moved further along — don't clobber that progress.
+      if (referral.workflow_status === "Draft") {
+        await updateReferralStatus(referral.id, "Pending Hospital Review");
+      }
+
+      const finalStatus =
+        referral.workflow_status === "Draft" ? "Pending Hospital Review" : referral.workflow_status;
 
       await db.referrals.put({
         id: String(referral.id),
@@ -169,7 +177,7 @@ function NewReferral() {
         referringFacility: referringFacilityName,
         referringProvider,
         destinationFacilityId: String(destinationFacilityId),
-        workflowStatus: "Pending Hospital Review",
+        workflowStatus: finalStatus,
         syncStatus: "Synced",
         synced: true,
         time: referral.created_at || new Date().toLocaleString(),

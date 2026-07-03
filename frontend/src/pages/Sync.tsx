@@ -100,11 +100,22 @@ function Sync() {
           urgency: r.urgency,
         });
 
-        await updateReferralStatus(serverReferral.id, "Pending Hospital Review");
+        // Only promote Draft → Pending Hospital Review. If this referral already
+        // exists on the server (e.g. a previous sync attempt created it but was
+        // interrupted before this step), it may already have moved further along
+        // (Arrived, Closed, feedback given) — don't clobber that progress.
+        if (serverReferral.workflow_status === "Draft") {
+          await updateReferralStatus(serverReferral.id, "Pending Hospital Review");
+        }
+
+        const finalStatus =
+          serverReferral.workflow_status === "Draft"
+            ? "Pending Hospital Review"
+            : serverReferral.workflow_status;
 
         await db.referrals.update(r.id, {
           syncStatus: "Synced",
-          workflowStatus: "Pending Hospital Review",
+          workflowStatus: finalStatus,
           synced: true,
         });
 
