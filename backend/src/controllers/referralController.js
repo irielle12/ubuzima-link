@@ -44,14 +44,27 @@ const createReferral = async (req, res) => {
       actionTaken,
     } = req.body;
 
+    const resolvedSourceId = req.user?.facilityId || sourceFacilityId || null;
+
     // Idempotency: if hospital already registered this referral from an offline QR
     // scan, don't create a duplicate — return the existing record.
     if (clientReferralNumber) {
       const existing = await pool.query(
-        `SELECT id FROM referrals WHERE referral_number = $1 LIMIT 1`,
+        `SELECT id, source_facility_id FROM referrals WHERE referral_number = $1 LIMIT 1`,
         [clientReferralNumber]
       );
       if (existing.rows.length > 0) {
+        // The hospital's offline-QR-accept flow doesn't know the source facility
+        // at accept-time, so it leaves source_facility_id null. Backfill it now
+        // that the true origin health post is syncing — otherwise this referral
+        // stays permanently invisible to that health post's own queues, no
+        // matter how far the hospital advances its status.
+        if (!existing.rows[0].source_facility_id && resolvedSourceId) {
+          await pool.query(
+            `UPDATE referrals SET source_facility_id = $1 WHERE id = $2`,
+            [resolvedSourceId, existing.rows[0].id]
+          );
+        }
         const full = await pool.query(
           `SELECT r.*, p.first_name, p.last_name
            FROM referrals r
@@ -81,7 +94,6 @@ const createReferral = async (req, res) => {
     }
 
     const referralNumber = clientReferralNumber || "REF-" + Date.now();
-    const resolvedSourceId = req.user?.facilityId || sourceFacilityId || null;
 
     const result = await pool.query(
       `INSERT INTO referrals
@@ -671,6 +683,7 @@ const receiveOfflineReferral = async (req, res) => {
       diagnosis,
       urgency,
       referringFacility,
+      sourceFacilityId,
     } = req.body;
 
     const hospitalFacilityId = req.user?.facilityId;
@@ -691,6 +704,14 @@ const receiveOfflineReferral = async (req, res) => {
       [referralNumber]
     );
     if (existingRef.rows.length > 0) {
+      // Backfill source_facility_id if it wasn't known at accept-time but is now.
+      if (!existingRef.rows[0].source_facility_id && sourceFacilityId) {
+        const patched = await pool.query(
+          `UPDATE referrals SET source_facility_id = $1 WHERE id = $2 RETURNING *`,
+          [sourceFacilityId, existingRef.rows[0].id]
+        );
+        return res.json({ ...existingRef.rows[0], ...patched.rows[0] });
+      }
       return res.json(existingRef.rows[0]);
     }
 
@@ -721,11 +742,11 @@ const receiveOfflineReferral = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO referrals
-       (referral_number, patient_id, destination_facility_id,
+       (referral_number, patient_id, source_facility_id, destination_facility_id,
         diagnosis, urgency, workflow_status, sync_status, chief_complaint)
-       VALUES ($1, $2, $3, $4, $5, 'Pending Hospital Review', 'Pending', $6)
+       VALUES ($1, $2, $3, $4, $5, $6, 'Pending Hospital Review', 'Pending', $7)
        RETURNING *`,
-      [referralNumber, patientId, hospitalFacilityId || null, diagnosis, urgency || null, chiefComplaint || null]
+      [referralNumber, patientId, sourceFacilityId || null, hospitalFacilityId || null, diagnosis, urgency || null, chiefComplaint || null]
     );
 
     const { who, where } = await getActorLabel(req.user?.id, hospitalFacilityId);

@@ -214,6 +214,7 @@ function Sync() {
       diagnosis: r.diagnosis,
       urgency: r.urgency,
       referringFacility: r.referringFacility || "",
+      sourceFacilityId: getUser()?.facilityId,
       destinationHospital: r.hospital,
       referralDate: r.time,
     };

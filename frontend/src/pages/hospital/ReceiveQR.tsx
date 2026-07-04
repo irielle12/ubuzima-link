@@ -221,6 +221,7 @@ function ReceiveQR() {
         diagnosis: result.payload.diagnosis,
         urgency: result.payload.urgency,
         referringFacility: result.payload.referringFacility,
+        sourceFacilityId: result.payload.sourceFacilityId,
         referralDate: result.payload.referralDate,
       });
       navigate("/hospital/queue");

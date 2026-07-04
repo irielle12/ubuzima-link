@@ -344,6 +344,7 @@ export async function receiveOfflineReferral(payload: {
   diagnosis: string;
   urgency?: string;
   referringFacility?: string;
+  sourceFacilityId?: number | string;
   referralDate?: string;
 }) {
   const response = await fetch(`${API_URL}/referrals/receive-offline`, {

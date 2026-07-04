@@ -119,6 +119,7 @@ function NewReferral() {
     patientPhone: patient.phone || "",
     chiefComplaint, diagnosis, urgency,
     referringFacility: referringFacilityName || "Health Post",
+    sourceFacilityId: currentUser?.facilityId,
     destinationHospital,
     referralDate: new Date().toLocaleDateString(),
   });
