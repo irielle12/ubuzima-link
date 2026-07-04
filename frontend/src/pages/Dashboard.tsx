@@ -4,7 +4,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 
 import { getReferralsBySource, getFacilityStats } from "../services/referralApi";
 import { getUser } from "../services/authApi";
-import { getFacilityById } from "../services/facilityApi";
+import { getFacilityById, getHospitals } from "../services/facilityApi";
 import { db } from "../services/db";
 import {
   getLastSyncAttempt,
@@ -70,6 +70,7 @@ function Dashboard() {
   useEffect(() => {
     loadNotifications();
     loadFacility();
+    loadHospitals();
     loadStats();
     loadSyncAlerts();
 
@@ -143,6 +144,19 @@ function Dashboard() {
       } catch (dbErr) {
         console.error(dbErr);
       }
+    }
+  };
+
+  // Pre-warms the destination-hospital cache from the dashboard (which every
+  // session visits right after login), so the "Receiving Hospital" picker on
+  // the referral form has data offline even if that form was never opened
+  // while online first.
+  const loadHospitals = async () => {
+    try {
+      const hospitals = await getHospitals();
+      await db.facilities.bulkPut(hospitals);
+    } catch (err) {
+      console.error(err);
     }
   };
 
