@@ -2,6 +2,19 @@ import { authHeader } from "./authApi";
 
 import API_URL from "./api";
 
+async function safeJson(response: Response) {
+  const text = await response.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(
+      response.ok
+        ? "Server returned an unexpected response instead of JSON."
+        : `Server error ${response.status}: the endpoint may not be deployed yet.`
+    );
+  }
+}
+
 export async function createReferral(
   referral: any
 ) {
@@ -22,7 +35,7 @@ export async function createReferral(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     const error: any = new Error(
@@ -44,7 +57,7 @@ export async function getReferrals() {
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -69,7 +82,7 @@ export async function getReferralById(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -100,7 +113,7 @@ export async function updateReferralStatus(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -117,7 +130,7 @@ export async function getHospitalQueue() {
     { headers: { ...authHeader() } }
   );
 
-  const data = await response.json();
+  const data = await safeJson(response);
 
   if (!response.ok) throw new Error(data.message);
 
@@ -134,7 +147,7 @@ export async function markArrived(id: number | string, note?: string) {
     }
   );
 
-  const data = await response.json();
+  const data = await safeJson(response);
 
   if (!response.ok) throw new Error(data.message);
 
@@ -151,7 +164,7 @@ export async function saveInternalNotes(id: number | string, notes: string) {
     }
   );
 
-  const data = await response.json();
+  const data = await safeJson(response);
 
   if (!response.ok) throw new Error(data.message);
 
@@ -164,7 +177,7 @@ export async function getReferralEvents(id: number | string) {
     { headers: { ...authHeader() } }
   );
 
-  const data = await response.json();
+  const data = await safeJson(response);
 
   if (!response.ok) throw new Error(data.message);
 
@@ -185,7 +198,7 @@ export async function getReferralByNumber(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -215,7 +228,7 @@ export async function sendSmsNotify(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -238,7 +251,7 @@ export async function getPendingReferrals() {
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -261,7 +274,7 @@ export async function getReferralsBySource() {
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -284,7 +297,7 @@ export async function getFacilityStats() {
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
@@ -301,7 +314,7 @@ export async function rejectReferral(id: number | string, rejectionReason: strin
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ workflowStatus: "Rejected", rejectionReason }),
   });
-  const data = await response.json();
+  const data = await safeJson(response);
   if (!response.ok) throw new Error(data.message);
   return data;
 }
@@ -316,7 +329,7 @@ export async function submitReferralFeedback(
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ treatmentStatus, hospitalNotes }),
   });
-  const data = await response.json();
+  const data = await safeJson(response);
   if (!response.ok) throw new Error(data.message);
   return data;
 }
@@ -338,7 +351,7 @@ export async function receiveOfflineReferral(payload: {
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify(payload),
   });
-  const data = await response.json();
+  const data = await safeJson(response);
   if (!response.ok) throw new Error(data.message);
   return data;
 }
@@ -366,7 +379,7 @@ export async function closeReferral(
     );
 
   const data =
-    await response.json();
+    await safeJson(response);
 
   if (!response.ok) {
     throw new Error(
