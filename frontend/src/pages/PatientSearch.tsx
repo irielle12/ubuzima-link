@@ -30,6 +30,15 @@ const loadPatients = async () => {
   try {
     const data = await getPatients();
 
+    // Prune previously-cached synced patients that no longer exist
+    // server-side (e.g. deleted), so they can't resurface from the local
+    // cache. Not-yet-synced offline drafts are left untouched.
+    const freshIds = new Set(data.map((p: any) => p.id));
+    const staleIds = (await db.patients.toArray())
+      .filter((p) => p.synced && !freshIds.has(p.id))
+      .map((p) => p.id);
+    if (staleIds.length) await db.patients.bulkDelete(staleIds);
+
     // Mirror the live list into Dexie so search still works offline.
     await db.patients.bulkPut(
       data.map((p: any) => ({ ...p, synced: true }))

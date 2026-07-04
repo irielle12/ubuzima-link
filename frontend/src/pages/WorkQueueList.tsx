@@ -54,6 +54,18 @@ function WorkQueueList() {
       }
 
       const data = await getReferralsBySource();
+
+      // Prune previously-cached referrals from this facility that no
+      // longer exist server-side (e.g. deleted), so they can't resurface
+      // from the local cache.
+      const freshIds = new Set(data.map((r: any) => r.id));
+      const staleIds = (
+        await db.cachedReferrals.where("source_facility_id").equals(user.facilityId).toArray()
+      )
+        .filter((r) => !freshIds.has(r.id))
+        .map((r) => r.id);
+      if (staleIds.length) await db.cachedReferrals.bulkDelete(staleIds);
+
       setReferrals(data.filter((r: any) => matchesSlug(r, status || "")));
       await db.cachedReferrals.bulkPut(data);
 

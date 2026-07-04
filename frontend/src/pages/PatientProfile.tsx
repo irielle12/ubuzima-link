@@ -13,22 +13,34 @@ function PatientProfile() {
   const [patient, setPatient] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [showWarning, setShowWarning] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (id) { loadPatient(); loadReferrals(); }
   }, [id]);
 
   const loadPatient = async () => {
+    const key = /^\d+$/.test(id!) ? Number(id) : id!;
+
     try {
       const data = await getPatientById(id!);
       setPatient(data);
       await db.patients.put({ ...data, synced: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+
+      if (err.status === 404) {
+        // Genuinely deleted server-side — don't resurrect a stale local
+        // copy. Purge it so it can't linger and reappear elsewhere.
+        await db.patients.delete(key).catch(() => {});
+        setPatient(null);
+        setNotFound(true);
+        return;
+      }
+
       // Offline, unreachable, or a local-only (not-yet-synced) patient —
       // fall back to whatever we have cached locally.
       try {
-        const key = /^\d+$/.test(id!) ? Number(id) : id!;
         const cached = await db.patients.get(key);
         if (cached) setPatient(cached);
       } catch (dbErr) {
@@ -65,6 +77,22 @@ function PatientProfile() {
       }
     }
   };
+
+  if (notFound) {
+    return (
+      <div className="patient-search-page">
+        <div className="patient-header">
+          <button className="back-btn-v2" onClick={() => navigate("/patient-search")}>
+            <ArrowLeft size={20} />
+          </button>
+          <h1>{t("Patient not found")}</h1>
+        </div>
+        <div className="empty-patient-state">
+          <p>{t("This patient record no longer exists.")}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!patient) return <div className="patient-search-page">{t("Loading...")}</div>;
 

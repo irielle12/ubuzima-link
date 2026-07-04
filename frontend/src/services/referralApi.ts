@@ -85,9 +85,9 @@ export async function getReferralById(
     await safeJson(response);
 
   if (!response.ok) {
-    throw new Error(
-      data.message
-    );
+    const err: any = new Error(data.message);
+    err.status = response.status;
+    throw err;
   }
 
   return data;

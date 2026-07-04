@@ -39,6 +39,14 @@ function ReferralDetails() {
       setReferral(data);
       await db.cachedReferrals.put(data);
     } catch (err: any) {
+      if (err.status === 404) {
+        // Genuinely deleted server-side — don't resurrect a stale local
+        // copy. Purge it so it can't linger and reappear elsewhere.
+        await db.cachedReferrals.delete(Number(id)).catch(() => {});
+        setError(err.message);
+        return;
+      }
+
       // Offline or unreachable — fall back to the last cached copy, if any.
       const cached = await db.cachedReferrals.get(Number(id)).catch(() => undefined);
       if (cached) {

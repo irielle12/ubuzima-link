@@ -94,9 +94,9 @@ export async function getPatientById(
     await response.json();
 
   if (!response.ok) {
-    throw new Error(
-      data.message
-    );
+    const err: any = new Error(data.message);
+    err.status = response.status;
+    throw err;
   }
 
   return data;
