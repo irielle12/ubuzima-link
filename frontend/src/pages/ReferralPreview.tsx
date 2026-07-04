@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConnectionStatus from "../components/ConnectionStatus";
+import { useNotification } from "../contexts/NotificationContext";
 import { db } from "../services/db";
 
 function ReferralPreview() {
   const navigate = useNavigate();
+  const { success } = useNotification();
 
   const [referral, setReferral] =
     useState<any>(null);
@@ -59,7 +61,7 @@ function ReferralPreview() {
         }
       );
 
-      alert(
+      success(
         "Referral accepted successfully."
       );
 

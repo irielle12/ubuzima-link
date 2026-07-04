@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { db } from "../services/db";
 import { createReferral, updateReferralStatus } from "../services/referralApi";
+import { createPatient } from "../services/patientApi";
 import { getUser } from "../services/authApi";
 import { recordSyncAttempt } from "../services/syncStatus";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -30,6 +31,7 @@ function Sync() {
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [globalSyncing, setGlobalSyncing] = useState(false);
+  const [pendingPatientCount, setPendingPatientCount] = useState(0);
 
   const syncingRef = useRef(false);
 
@@ -58,7 +60,53 @@ function Sync() {
     );
     setCardErrors({});
 
+    const patients = await db.patients.toArray();
+    setPendingPatientCount(patients.filter((p) => !p.synced).length);
+
     return pending;
+  };
+
+  // Registers any offline-created patients first, so referrals that
+  // reference them can be resolved to a real server-side patient ID.
+  // Returns a map from temporary local patient ID -> real server ID, plus
+  // any per-patient errors so the referral loop can report them clearly.
+  const syncPatients = async () => {
+    const idMap: Record<string, string> = {};
+    const errors: Record<string, string> = {};
+    const localPatients = (await db.patients.toArray()).filter((p) => !p.synced);
+
+    for (const p of localPatients) {
+      try {
+        let serverPatient: any;
+        try {
+          serverPatient = await createPatient({
+            fullName: `${p.first_name} ${p.last_name}`.trim(),
+            gender: p.gender,
+            dateOfBirth: p.date_of_birth,
+            phoneNumber: p.phone,
+            nationalId: p.national_id,
+            guardianNationalId: p.guardian_national_id,
+          });
+        } catch (err: any) {
+          if (err.existingPatient) {
+            // Already registered server-side (e.g. an earlier sync attempt
+            // created it but was interrupted before we marked it synced
+            // locally) — reuse that record instead of failing.
+            serverPatient = err.existingPatient;
+          } else {
+            throw err;
+          }
+        }
+
+        idMap[String(p.id)] = String(serverPatient.id);
+        await db.patients.delete(p.id);
+        await db.patients.put({ ...serverPatient, synced: true });
+      } catch (err: any) {
+        errors[String(p.id)] = err.message || "Failed to sync patient";
+      }
+    }
+
+    return { idMap, errors };
   };
 
   const triggerSync = async () => {
@@ -67,11 +115,17 @@ function Sync() {
     syncingRef.current = true;
     setGlobalSyncing(true);
 
+    const { idMap: patientIdMap, errors: patientErrors } = await syncPatients();
+
+    const remainingPatients = await db.patients.toArray();
+    setPendingPatientCount(remainingPatients.filter((p) => !p.synced).length);
+
     const pending = await db.referrals.toArray().then((all) =>
       all.filter((r) => r.workflowStatus === "Pending Sync")
     );
 
     if (pending.length === 0) {
+      recordSyncAttempt(Object.keys(patientErrors).length === 0);
       syncingRef.current = false;
       setGlobalSyncing(false);
       return;
@@ -83,9 +137,23 @@ function Sync() {
     for (const r of pending) {
       setCardStates((prev) => ({ ...prev, [r.id]: "syncing" }));
 
+      // If this referral's patient was itself created offline, resolve it
+      // to the real server-side ID now that patients have synced above.
+      const resolvedPatientId = patientIdMap[r.patientId] || r.patientId;
+
+      if (patientErrors[r.patientId]) {
+        anyFailed = true;
+        setCardStates((prev) => ({ ...prev, [r.id]: "error" }));
+        setCardErrors((prev) => ({
+          ...prev,
+          [r.id]: `Patient sync failed: ${patientErrors[r.patientId]}`,
+        }));
+        continue;
+      }
+
       try {
         const serverReferral = await createReferral({
-          patientId: parseInt(r.patientId, 10),
+          patientId: parseInt(resolvedPatientId, 10),
           referralNumber: r.referralNumber,
           sourceFacilityId: user?.facilityId,
           destinationFacilityId: parseInt(r.destinationFacilityId || "0", 10),
@@ -117,6 +185,7 @@ function Sync() {
           syncStatus: "Synced",
           workflowStatus: finalStatus,
           synced: true,
+          patientId: resolvedPatientId,
         });
 
         setCardStates((prev) => ({ ...prev, [r.id]: "synced" }));
@@ -192,6 +261,8 @@ function Sync() {
             {allReferrals.length === 0
               ? t("No referrals waiting")
               : `${allReferrals.length} referral${allReferrals.length === 1 ? "" : "s"} to upload`}
+            {pendingPatientCount > 0 &&
+              ` · ${pendingPatientCount} patient${pendingPatientCount === 1 ? "" : "s"} to upload`}
           </p>
         </div>
       </div>
@@ -226,7 +297,7 @@ function Sync() {
       )}
 
       {/* EMPTY STATE */}
-      {allReferrals.length === 0 && (
+      {allReferrals.length === 0 && pendingPatientCount === 0 && (
         <div className="details-card">
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <CheckCircle size={36} color="#16a34a" />
@@ -240,8 +311,21 @@ function Sync() {
         </div>
       )}
 
+      {/* PATIENT-ONLY PENDING NOTICE */}
+      {allReferrals.length === 0 && pendingPatientCount > 0 && (
+        <div
+          className="details-card"
+          style={{ background: "#eff6ff", border: "1px solid #bfdbfe", display: "flex", alignItems: "center", gap: 10 }}
+        >
+          <AlertCircle size={18} color="#2563eb" />
+          <span style={{ fontSize: 14, color: "#1d4ed8" }}>
+            {pendingPatientCount} patient{pendingPatientCount === 1 ? "" : "s"} registered offline, waiting to sync.
+          </span>
+        </div>
+      )}
+
       {/* SYNC NOW BUTTON */}
-      {allReferrals.length > 0 && !allSynced && (
+      {((allReferrals.length > 0 && !allSynced) || pendingPatientCount > 0) && (
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={triggerSync}

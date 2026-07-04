@@ -128,35 +128,51 @@ function Dashboard() {
   };
 
   const loadFacility = async () => {
+    const user = getUser();
+    if (!user?.facilityId) return;
+
     try {
-      const user = getUser();
-
-      if (!user?.facilityId) return;
-
       const facility = await getFacilityById(user.facilityId);
-
       setFacilityName(facility.name);
+      await db.facilities.put({ id: user.facilityId, ...facility });
     } catch (err) {
       console.error(err);
+      try {
+        const cached = await db.facilities.get(user.facilityId);
+        if (cached) setFacilityName(cached.name);
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
     }
   };
 
   const loadNotifications = async () => {
+    const user = getUser();
+    if (!user?.facilityId) return;
+
+    let referrals: any[];
     try {
-      const user = getUser();
-      if (!user?.facilityId) return;
-
-      const referrals = await getReferralsBySource();
-      const closed = referrals.filter((r: any) => r.workflow_status === "Closed");
-
-      setClosedReferrals(closed);
-
-      const seenKey = `seenClosedCount_${user.facilityId}`;
-      const seenCount = parseInt(localStorage.getItem(seenKey) || "0", 10);
-      setNotifications(Math.max(0, closed.length - seenCount));
+      referrals = await getReferralsBySource();
+      await db.cachedReferrals.bulkPut(referrals);
     } catch (err) {
       console.error(err);
+      try {
+        referrals = (await db.cachedReferrals.toArray()).filter(
+          (r) => r.source_facility_id === user.facilityId
+        );
+      } catch (dbErr) {
+        console.error(dbErr);
+        return;
+      }
     }
+
+    const closed = referrals.filter((r: any) => r.workflow_status === "Closed");
+
+    setClosedReferrals(closed);
+
+    const seenKey = `seenClosedCount_${user.facilityId}`;
+    const seenCount = parseInt(localStorage.getItem(seenKey) || "0", 10);
+    setNotifications(Math.max(0, closed.length - seenCount));
   };
 
   const handleBellClick = () => {
@@ -184,7 +200,11 @@ function Dashboard() {
 
       setStats(data);
     } catch (err: any) {
-      setStatsError(err.message || "Failed to load reports.");
+      setStatsError(
+        navigator.onLine
+          ? err.message || "Failed to load reports."
+          : "Reports need a connection — reconnect and retry."
+      );
     } finally {
       setStatsLoading(false);
     }

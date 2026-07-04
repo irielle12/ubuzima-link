@@ -80,8 +80,23 @@ function Referrals() {
       const data = await getReferralsBySource();
 
       setReferrals(data);
+      await db.cachedReferrals.bulkPut(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load referrals.");
+      // Offline or unreachable — fall back to whatever we've cached from
+      // previous visits, rather than showing a hard error.
+      try {
+        const user = getUser();
+        const cached = (await db.cachedReferrals.toArray()).filter(
+          (r) => r.source_facility_id === user?.facilityId
+        );
+        if (cached.length > 0) {
+          setReferrals(cached);
+        } else {
+          setError(err.message || "Failed to load referrals.");
+        }
+      } catch {
+        setError(err.message || "Failed to load referrals.");
+      }
     } finally {
       setLoading(false);
     }

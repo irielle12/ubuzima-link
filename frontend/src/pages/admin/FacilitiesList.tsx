@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNotification } from "../../contexts/NotificationContext";
 import {
   getFacilities,
   getFacilitiesBin,
@@ -16,6 +17,7 @@ function emptyForm() {
 }
 
 function FacilitiesList() {
+  const { error: notifyError, confirm } = useNotification();
   const [tab, setTab] = useState<"active" | "bin">("active");
   const [facilities, setFacilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,12 +95,16 @@ function FacilitiesList() {
   };
 
   const handleDelete = async (facility: any) => {
-    if (!window.confirm(`Move "${facility.name}" to the recycle bin?`)) return;
+    const ok = await confirm(`Move "${facility.name}" to the recycle bin?`, {
+      confirmLabel: "Move to Bin",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteFacility(facility.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to delete facility.");
+      notifyError(err.message || "Failed to delete facility.");
     }
   };
 
@@ -107,17 +113,21 @@ function FacilitiesList() {
       await restoreFacility(facility.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to restore facility.");
+      notifyError(err.message || "Failed to restore facility.");
     }
   };
 
   const handlePermanentDelete = async (facility: any) => {
-    if (!window.confirm(`Permanently delete "${facility.name}"? This cannot be undone.`)) return;
+    const ok = await confirm(`Permanently delete "${facility.name}"? This cannot be undone.`, {
+      confirmLabel: "Delete Permanently",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await permanentDeleteFacility(facility.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to permanently delete facility.");
+      notifyError(err.message || "Failed to permanently delete facility.");
     }
   };
 

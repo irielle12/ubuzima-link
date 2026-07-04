@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getPatientById, getPatientReferrals } from "../services/patientApi";
+import { db } from "../services/db";
 
 function PatientProfile() {
   const navigate = useNavigate();
@@ -18,11 +19,51 @@ function PatientProfile() {
   }, [id]);
 
   const loadPatient = async () => {
-    try { setPatient(await getPatientById(id!)); } catch (err) { console.error(err); }
+    try {
+      const data = await getPatientById(id!);
+      setPatient(data);
+      await db.patients.put({ ...data, synced: true });
+    } catch (err) {
+      console.error(err);
+      // Offline, unreachable, or a local-only (not-yet-synced) patient —
+      // fall back to whatever we have cached locally.
+      try {
+        const key = /^\d+$/.test(id!) ? Number(id) : id!;
+        const cached = await db.patients.get(key);
+        if (cached) setPatient(cached);
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
+    }
   };
 
   const loadReferrals = async () => {
-    try { setReferrals(await getPatientReferrals(id!)); } catch (err) { console.error(err); }
+    try {
+      const data = await getPatientReferrals(id!);
+      setReferrals(data);
+      await db.cachedReferrals.bulkPut(data);
+    } catch (err) {
+      console.error(err);
+      try {
+        const cachedSynced = /^\d+$/.test(id!)
+          ? await db.cachedReferrals.where("patient_id").equals(Number(id)).toArray()
+          : [];
+
+        const localDrafts = (await db.referrals.toArray())
+          .filter((r) => r.patientId === String(id))
+          .map((r) => ({
+            id: r.id,
+            referral_number: r.referralNumber,
+            created_at: r.time,
+            urgency: r.urgency,
+            workflow_status: r.workflowStatus,
+          }));
+
+        setReferrals([...localDrafts, ...cachedSynced]);
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
+    }
   };
 
   if (!patient) return <div className="patient-search-page">{t("Loading...")}</div>;

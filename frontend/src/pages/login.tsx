@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useNavigate,
   useSearchParams,
@@ -16,6 +16,20 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   const getTitle = () => {
     switch (role) {
@@ -83,6 +97,12 @@ function Login() {
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleLogin()}
         />
+
+        {!isOnline && !error && (
+          <p style={{ color: "#b45309", fontSize: 12, margin: "0 0 10px" }}>
+            You're offline. You can still sign in if you've signed in on this device before.
+          </p>
+        )}
 
         {error && (
           <p style={{ color: "#dc2626", fontSize: 13, margin: "0 0 10px" }}>

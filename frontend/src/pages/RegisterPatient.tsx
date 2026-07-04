@@ -4,12 +4,15 @@ import { ArrowLeft } from "lucide-react";
 import { createPatient } from "../services/patientApi";
 import type { PatientDuplicate } from "../services/patientApi";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNotification } from "../contexts/NotificationContext";
+import { db } from "../services/db";
 
 function CreatePatient() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode");
   const { t } = useLanguage();
+  const { success, error: notifyError } = useNotification();
 
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState("");
@@ -21,25 +24,77 @@ function CreatePatient() {
   const [duplicate, setDuplicate] = useState<PatientDuplicate | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
+  const MAX_AGE_YEARS = 120;
+  const minDob = new Date(
+    new Date().getFullYear() - MAX_AGE_YEARS,
+    new Date().getMonth(),
+    new Date().getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   const handleSave = async () => {
     if (!fullName || !gender || !dateOfBirth) {
-      alert(t("Please fill in name, gender, and date of birth."));
+      notifyError(t("Please fill in name, gender, and date of birth."));
+      return;
+    }
+
+    if (Number.isNaN(new Date(dateOfBirth).getTime())) {
+      notifyError(t("Please enter a valid date of birth."));
+      return;
+    }
+
+    if (dateOfBirth > today) {
+      notifyError(t("Date of birth cannot be in the future."));
+      return;
+    }
+
+    if (dateOfBirth < minDob) {
+      notifyError(t(`Date of birth cannot be more than ${MAX_AGE_YEARS} years ago.`));
       return;
     }
 
     if (!isBaby && nationalId.length !== 16) {
-      alert(t("National ID must be 16 digits."));
+      notifyError(t("National ID must be 16 digits."));
       return;
     }
 
     if (isBaby && guardianNationalId.length !== 16) {
-      alert(t("Guardian's National ID must be 16 digits."));
+      notifyError(t("Guardian's National ID must be 16 digits."));
       return;
     }
 
     if (phoneNumber && phoneNumber.length !== 9) {
-      alert(t("Phone number must be 9 digits (after +250)."));
+      notifyError(t("Phone number must be 9 digits (after +250)."));
+      return;
+    }
+
+    const nameParts = fullName.trim().split(/\s+/);
+    const buildLocalPatient = () => ({
+      id: "LOCAL-" + Date.now(),
+      patient_number: "PAT-" + Date.now(),
+      first_name: nameParts[0] || "",
+      last_name: nameParts.slice(1).join(" ") || "-",
+      gender,
+      date_of_birth: dateOfBirth,
+      phone: phoneNumber ? "+250" + phoneNumber : "",
+      national_id: isBaby ? "" : nationalId,
+      guardian_national_id: isBaby ? guardianNationalId : "",
+      synced: false,
+    });
+
+    // Skip the network entirely when offline — save locally right away.
+    if (!navigator.onLine) {
+      const localPatient = buildLocalPatient();
+      await db.patients.put(localPatient);
+      localStorage.setItem("selectedPatient", JSON.stringify(localPatient));
+      success(t("Patient registered successfully."));
+
+      if (mode === "referral") {
+        navigate("/new-referral");
+      } else {
+        navigate("/dashboard");
+      }
       return;
     }
 
@@ -53,8 +108,9 @@ function CreatePatient() {
         guardianNationalId: isBaby ? guardianNationalId : "",
       });
 
+      await db.patients.put({ ...patient, synced: true });
       localStorage.setItem("selectedPatient", JSON.stringify(patient));
-      alert(t("Patient registered successfully."));
+      success(t("Patient registered successfully."));
 
       if (mode === "referral") {
         navigate("/new-referral");
@@ -64,9 +120,24 @@ function CreatePatient() {
     } catch (err: any) {
       if (err.existingPatient) {
         setDuplicate(err.existingPatient);
-      } else {
-        alert(err.message || t("Failed to register patient."));
+        return;
       }
+
+      if (err.name === "TypeError" || err.message === "Failed to fetch") {
+        const localPatient = buildLocalPatient();
+        await db.patients.put(localPatient);
+        localStorage.setItem("selectedPatient", JSON.stringify(localPatient));
+        success(t("Patient registered successfully."));
+
+        if (mode === "referral") {
+          navigate("/new-referral");
+        } else {
+          navigate("/dashboard");
+        }
+        return;
+      }
+
+      notifyError(err.message || t("Failed to register patient."));
     }
   };
 
@@ -138,6 +209,7 @@ function CreatePatient() {
         <input
           type="date"
           max={today}
+          min={minDob}
           value={dateOfBirth}
           onChange={(e) => setDateOfBirth(e.target.value)}
         />

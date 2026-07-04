@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getReferralsBySource } from "../services/referralApi";
 import { getUser } from "../services/authApi";
+import { db } from "../services/db";
 import ConnectionStatus from "../components/ConnectionStatus";
 import { FileText, RefreshCw } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -41,11 +42,11 @@ function WorkQueueList() {
   }, [status]);
 
   const loadReferrals = async () => {
+    const user = getUser();
+
     try {
       setLoading(true);
       setError("");
-
-      const user = getUser();
 
       if (!user?.facilityId) {
         setReferrals([]);
@@ -54,13 +55,22 @@ function WorkQueueList() {
 
       const data = await getReferralsBySource();
       setReferrals(data.filter((r: any) => matchesSlug(r, status || "")));
+      await db.cachedReferrals.bulkPut(data);
 
       if (status === "closed") {
         const closedCount = data.filter((r: any) => r.workflow_status === "Closed").length;
         localStorage.setItem(`seenClosedCount_${user.facilityId}`, closedCount.toString());
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load referrals.");
+      // Offline or unreachable — fall back to the cached list.
+      try {
+        const cached = (await db.cachedReferrals.toArray()).filter(
+          (r) => r.source_facility_id === user?.facilityId && matchesSlug(r, status || "")
+        );
+        setReferrals(cached);
+      } catch {
+        setError(err.message || "Failed to load referrals.");
+      }
     } finally {
       setLoading(false);
     }

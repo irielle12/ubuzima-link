@@ -10,6 +10,7 @@ import {
 import {
   getPatients,
 } from "../services/patientApi";
+import { db } from "../services/db";
 
 function PatientSearch() {
   const navigate = useNavigate();
@@ -27,16 +28,25 @@ function PatientSearch() {
 
 const loadPatients = async () => {
   try {
+    const data = await getPatients();
 
-    const data =
-      await getPatients();
+    // Mirror the live list into Dexie so search still works offline.
+    await db.patients.bulkPut(
+      data.map((p: any) => ({ ...p, synced: true }))
+    );
 
     setPatients(data);
-
   } catch (error) {
-
     console.error(error);
 
+    // Offline (or the server is unreachable) — fall back to the local
+    // cache, which also includes any patients registered offline.
+    try {
+      const cached = await db.patients.toArray();
+      setPatients(cached as any[]);
+    } catch (dbErr) {
+      console.error(dbErr);
+    }
   }
 };
   const filteredPatients =

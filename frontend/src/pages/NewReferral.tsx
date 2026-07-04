@@ -5,6 +5,7 @@ import { getHospitals, getFacilityById, getHospitalCapacity } from "../services/
 import { getUser } from "../services/authApi";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNotification } from "../contexts/NotificationContext";
 import { User, CreditCard, Clock, UserCheck, Phone, MapPin } from "lucide-react";
 
 function calcAge(dob: string | undefined): string {
@@ -26,6 +27,7 @@ function generateReferralNumber(): string {
 function NewReferral() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { error: notifyError, confirm } = useNotification();
   const patient = JSON.parse(localStorage.getItem("selectedPatient") || "{}");
   const currentUser = getUser();
 
@@ -50,13 +52,34 @@ function NewReferral() {
     try {
       const hospitalList = await getHospitals();
       setHospitals(hospitalList);
-    } catch (err) { console.error(err); }
+      await db.facilities.bulkPut(hospitalList);
+    } catch (err) {
+      console.error(err);
+      try {
+        const cached = await db.facilities.toArray();
+        setHospitals(cached);
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
+    }
+
     try {
       if (currentUser?.facilityId) {
         const facility = await getFacilityById(currentUser.facilityId);
         setReferringFacilityName(facility.name);
+        await db.facilities.put({ id: currentUser.facilityId, ...facility });
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      try {
+        if (currentUser?.facilityId) {
+          const cached = await db.facilities.get(currentUser.facilityId);
+          if (cached) setReferringFacilityName(cached.name);
+        }
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
+    }
   };
 
   const checkCapacity = async (facilityId: string, currentUrgency: string) => {
@@ -96,16 +119,19 @@ function NewReferral() {
 
   const handleSubmit = async () => {
     if (!chiefComplaint || !diagnosis || !urgency || !destinationFacilityId) {
-      alert(t("Please complete: Chief Complaint, Provisional Diagnosis, Priority Level, and Receiving Hospital."));
+      notifyError(t("Please complete: Chief Complaint, Provisional Diagnosis, Priority Level, and Receiving Hospital."));
       return;
     }
 
     const destinationHospital = getHospitalName();
     const referralNumber = generateReferralNumber();
 
-    // Skip the network entirely when offline — go straight to QR flow.
+    // Skip the network entirely when offline, or when the patient is still an
+    // unsynced local draft (there's no server-side patient row to reference
+    // yet) — go straight to the local draft + QR flow.
     // Don't rely on catch alone: local backends (dev) succeed even without internet.
-    if (!navigator.onLine) {
+    const patientIsLocalOnly = String(patient.id).startsWith("LOCAL-");
+    if (!navigator.onLine || patientIsLocalOnly) {
       setSubmitting(true);
       try {
         const localRecord = {
@@ -189,7 +215,10 @@ function NewReferral() {
       navigate(`/referral-details/${referral.id}`, { state: { submitted: true } });
     } catch (err: any) {
       if (err.existingDraftId) {
-        const openDraft = window.confirm(`${err.message} Open the existing draft instead?`);
+        const openDraft = await confirm(`${err.message} Open the existing draft instead?`, {
+          confirmLabel: t("Open Draft"),
+          cancelLabel: t("Cancel"),
+        });
         if (openDraft) navigate(`/referral-details/${err.existingDraftId}`);
         return;
       }
@@ -228,7 +257,7 @@ function NewReferral() {
         return;
       }
 
-      alert(err.message || t("Failed to create referral."));
+      notifyError(err.message || t("Failed to create referral."));
     } finally {
       setSubmitting(false);
     }

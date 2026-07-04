@@ -1470,3 +1470,122 @@
 }
 
 /* duplicate .status-chip / .status-chip.review overrides removed — canonical definitions are above */
+
+/* ==================================================
+   TOASTS
+================================================== */
+.toast-stack {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: calc(100% - 32px);
+  max-width: 460px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  z-index: 1000;
+
+  pointer-events: none;
+}
+
+.toast-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: white;
+  border-radius: 12px;
+  padding: 12px 14px;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  border: 1px solid #e2e8f0;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+
+  pointer-events: auto;
+
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast-item span {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.toast-dismiss {
+  width: auto;
+  border: none;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  padding: 2px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.toast-success {
+  border-left: 3px solid #16a34a;
+}
+
+.toast-success svg {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.toast-error {
+  border-left: 3px solid #dc2626;
+}
+
+.toast-error svg {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.toast-info {
+  border-left: 3px solid #2563eb;
+}
+
+.toast-info svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.danger-action-btn {
+  width: 100%;
+  height: 52px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #dc2626;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.danger-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

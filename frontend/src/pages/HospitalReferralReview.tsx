@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ConnectionStatus from "../components/ConnectionStatus";
+import { useNotification } from "../contexts/NotificationContext";
 import {
   getReferralById,
   updateReferralStatus,
@@ -18,6 +19,7 @@ function statusChipClass(status: string) {
 function HospitalReferralReview() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { error: notifyError } = useNotification();
 
   const [referral, setReferral] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ function HospitalReferralReview() {
       await updateReferralStatus(referral.id, "Hospital Accepted");
       await loadReferral();
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err.message);
     } finally {
       setBusy(false);
     }
@@ -74,7 +76,7 @@ function HospitalReferralReview() {
       setShowReject(false);
       await loadReferral();
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err.message);
     } finally {
       setBusy(false);
     }
@@ -84,7 +86,7 @@ function HospitalReferralReview() {
     if (!referral) return;
 
     if (!hospitalNotes.trim()) {
-      alert("Add clinical notes before submitting feedback.");
+      notifyError("Add clinical notes before submitting feedback.");
       return;
     }
 
@@ -97,7 +99,7 @@ function HospitalReferralReview() {
       );
       await loadReferral();
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err.message);
     } finally {
       setBusy(false);
     }
@@ -111,7 +113,7 @@ function HospitalReferralReview() {
       await updateReferralStatus(referral.id, "Closed");
       await loadReferral();
     } catch (err: any) {
-      alert(err.message);
+      notifyError(err.message);
     } finally {
       setBusy(false);
     }

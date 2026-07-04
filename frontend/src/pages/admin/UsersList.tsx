@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNotification } from "../../contexts/NotificationContext";
 import {
   getUsers,
   getUsersBin,
@@ -25,6 +26,7 @@ function emptyForm() {
 }
 
 function UsersList() {
+  const { error: notifyError, confirm } = useNotification();
   const [tab, setTab] = useState<"active" | "bin">("active");
   const [users, setUsers] = useState<any[]>([]);
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -170,12 +172,16 @@ function UsersList() {
   };
 
   const handleDelete = async (user: any) => {
-    if (!window.confirm(`Move "${user.first_name} ${user.last_name}" to the recycle bin?`)) return;
+    const ok = await confirm(`Move "${user.first_name} ${user.last_name}" to the recycle bin?`, {
+      confirmLabel: "Move to Bin",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteUser(user.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to delete user.");
+      notifyError(err.message || "Failed to delete user.");
     }
   };
 
@@ -184,17 +190,21 @@ function UsersList() {
       await restoreUser(user.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to restore user.");
+      notifyError(err.message || "Failed to restore user.");
     }
   };
 
   const handlePermanentDelete = async (user: any) => {
-    if (!window.confirm(`Permanently delete "${user.first_name} ${user.last_name}"? This cannot be undone.`)) return;
+    const ok = await confirm(`Permanently delete "${user.first_name} ${user.last_name}"? This cannot be undone.`, {
+      confirmLabel: "Delete Permanently",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await permanentDeleteUser(user.id);
       await load();
     } catch (err: any) {
-      alert(err.message || "Failed to permanently delete user.");
+      notifyError(err.message || "Failed to permanently delete user.");
     }
   };
 

@@ -5,6 +5,7 @@ import {
   Navigate
 } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/login";
@@ -39,6 +40,7 @@ import ReceiveQR from "./pages/hospital/ReceiveQR";
 function App() {
   return (
     <LanguageProvider>
+    <NotificationProvider>
     <BrowserRouter>
       <Routes>
 
@@ -114,6 +116,7 @@ function App() {
 </Route>
       </Routes>
     </BrowserRouter>
+    </NotificationProvider>
     </LanguageProvider>
   );
 }

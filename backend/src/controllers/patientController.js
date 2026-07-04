@@ -1,5 +1,21 @@
 const pool = require("../config/db");
 
+const MAX_PATIENT_AGE_YEARS = 120;
+
+function isValidDateOfBirth(dateOfBirth) {
+  const parsed = new Date(dateOfBirth);
+  if (Number.isNaN(parsed.getTime())) return false;
+
+  const today = new Date();
+  if (parsed > today) return false;
+
+  const minDate = new Date(today);
+  minDate.setFullYear(minDate.getFullYear() - MAX_PATIENT_AGE_YEARS);
+  if (parsed < minDate) return false;
+
+  return true;
+}
+
 const createPatient = async (req, res) => {
   try {
     const {
@@ -10,6 +26,12 @@ const createPatient = async (req, res) => {
       nationalId,
       guardianNationalId,
     } = req.body;
+
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      return res.status(400).json({
+        message: `Date of birth must be a valid date, not in the future, and not more than ${MAX_PATIENT_AGE_YEARS} years ago.`,
+      });
+    }
 
     /* Duplicate check — two paths:
        - Adult: match on own national_id

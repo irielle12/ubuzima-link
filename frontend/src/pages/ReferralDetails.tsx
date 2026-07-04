@@ -4,6 +4,7 @@ import ConnectionStatus from "../components/ConnectionStatus";
 import { getReferralById } from "../services/referralApi";
 import { getReturnReferral } from "../services/returnReferralApi";
 import { useLanguage } from "../contexts/LanguageContext";
+import { db } from "../services/db";
 import {
   House, FileText, Wifi, User,
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
@@ -36,8 +37,15 @@ function ReferralDetails() {
       setError("");
       const data = await getReferralById(id as string);
       setReferral(data);
+      await db.cachedReferrals.put(data);
     } catch (err: any) {
-      setError(err.message);
+      // Offline or unreachable — fall back to the last cached copy, if any.
+      const cached = await db.cachedReferrals.get(Number(id)).catch(() => undefined);
+      if (cached) {
+        setReferral(cached);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -227,22 +235,28 @@ function ReferralDetails() {
 
       {/* HOSPITAL FEEDBACK (Closed with feedback) */}
       {status === "Closed" && hasFeedback(referral) && (
-        <div className="details-card">
-          <h3>{t("Hospital Feedback")}</h3>
+        <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+            {t("Hospital Feedback")}
+          </p>
 
-          <div className="detail-row">
-            <strong>{t("Date:")}</strong>
-            <span>{referral.feedback_at ? new Date(referral.feedback_at).toLocaleString() : "—"}</span>
-          </div>
+          {[
+            { icon: <Calendar size={14} />, label: t("Date:"), value: referral.feedback_at ? new Date(referral.feedback_at).toLocaleString() : "—" },
+            { icon: <CheckCircle size={14} />, label: t("Outcome:"), value: referral.treatment_status || "—" },
+          ].map((row) => (
+            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
+              <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+            </div>
+          ))}
 
-          <div className="detail-row">
-            <strong>{t("Outcome:")}</strong>
-            <span>{referral.treatment_status || "—"}</span>
-          </div>
-
-          <div style={{ marginTop: "12px" }}>
-            <strong>{t("Clinical Notes")}</strong>
-            <p style={{ marginTop: "8px" }}>
+          <div style={{ padding: "10px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+              <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Clinical Notes")}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>
               {referral.hospital_notes || t("No notes available.")}
             </p>
           </div>
@@ -251,30 +265,39 @@ function ReferralDetails() {
 
       {/* RETURN REFERRAL */}
       {returnReferral && (
-        <div className="details-card">
-          <h3>{t("Return Instructions from Hospital")}</h3>
+        <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+            {t("Return Instructions from Hospital")}
+          </p>
 
-          <div className="detail-row">
-            <strong>{t("Follow-up urgency:")}</strong>
-            <span>{returnReferral.follow_up_urgency}</span>
-          </div>
-
-          {returnReferral.next_appointment_date && (
-            <div className="detail-row">
-              <strong>{t("Next appointment:")}</strong>
-              <span>{returnReferral.next_appointment_date}</span>
+          {[
+            { icon: <AlertTriangle size={14} />, label: t("Follow-up urgency:"), value: returnReferral.follow_up_urgency },
+            ...(returnReferral.next_appointment_date
+              ? [{ icon: <Calendar size={14} />, label: t("Next appointment:"), value: returnReferral.next_appointment_date }]
+              : []),
+          ].map((row) => (
+            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
+              <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
             </div>
-          )}
+          ))}
 
-          <div style={{ marginTop: 12 }}>
-            <strong>{t("Instructions")}</strong>
-            <p style={{ marginTop: 8, color: "#475569" }}>{returnReferral.follow_up_instructions}</p>
+          <div style={{ padding: "10px 16px", borderBottom: returnReferral.medications_prescribed ? "1px solid #f1f5f9" : "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+              <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Instructions")}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{returnReferral.follow_up_instructions}</p>
           </div>
 
           {returnReferral.medications_prescribed && (
-            <div style={{ marginTop: 8 }}>
-              <strong>{t("Medications")}</strong>
-              <p style={{ marginTop: 8, color: "#475569" }}>{returnReferral.medications_prescribed}</p>
+            <div style={{ padding: "10px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Medications")}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{returnReferral.medications_prescribed}</p>
             </div>
           )}
         </div>
