@@ -150,3 +150,38 @@ export function authHeader(): Record<string, string> {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+) {
+  const response = await fetch(`${API_URL}/auth/change-password`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message);
+  }
+
+  // Keep the offline-login credential cache (see `loginOffline` above) in
+  // sync — otherwise the old password would keep working offline, and the
+  // new one wouldn't, until the next successful online login.
+  const user = getUser();
+  const token = getToken();
+  if (user?.staffId && token) {
+    try {
+      await cacheCredentials(user.staffId, newPassword, user, token);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  return data;
+}

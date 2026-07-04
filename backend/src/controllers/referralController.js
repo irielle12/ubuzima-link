@@ -1,5 +1,31 @@
 const pool = require("../config/db");
 
+// Resolves the acting user + facility into human-readable labels for
+// audit-log event descriptions (e.g. "Referred by Jeanne Mukamana (NURSE001)
+// from Kigarama Health Post"), so the hospital-side timeline shows who did
+// what, not just what happened.
+async function getActorLabel(userId, facilityId) {
+  const [userResult, facilityResult] = await Promise.all([
+    userId
+      ? pool.query(
+          `SELECT first_name, last_name, staff_id FROM users WHERE id = $1`,
+          [userId]
+        )
+      : Promise.resolve({ rows: [] }),
+    facilityId
+      ? pool.query(`SELECT name FROM facilities WHERE id = $1`, [facilityId])
+      : Promise.resolve({ rows: [] }),
+  ]);
+
+  const u = userResult.rows[0];
+  const f = facilityResult.rows[0];
+
+  return {
+    who: u ? `${u.first_name} ${u.last_name} (${u.staff_id})` : null,
+    where: f ? f.name : null,
+  };
+}
+
 const createReferral = async (req, res) => {
   try {
     const {
@@ -85,6 +111,14 @@ const createReferral = async (req, res) => {
       ]
     );
 
+    const { who, where } = await getActorLabel(req.user?.id, resolvedSourceId);
+    const createdDescription =
+      who && where
+        ? `Referred by ${who} from ${where}`
+        : who
+        ? `Referred by ${who}`
+        : "Referral created by health worker";
+
     await pool.query(
       `
       INSERT INTO referral_events
@@ -99,7 +133,7 @@ const createReferral = async (req, res) => {
       [
         result.rows[0].id,
         "Referral Created",
-        "Referral created by health worker",
+        createdDescription,
       ]
     );
 
@@ -212,10 +246,20 @@ const updateReferralStatus = async (req, res) => {
     }
 
     if (workflowStatus === "Pending Hospital Review") {
+      const { who, where } = await getActorLabel(req.user?.id, req.user?.facilityId);
+
+      const description = isHospitalClaim
+        ? who && where
+          ? `Claimed by ${who} at ${where}`
+          : "Claimed by receiving hospital"
+        : who && where
+        ? `Submitted by ${who} from ${where}`
+        : "Referral submitted to hospital";
+
       await pool.query(
         `INSERT INTO referral_events (referral_id, event_type, event_description)
          VALUES ($1, $2, $3)`,
-        [id, "Referral Submitted", "Referral submitted to hospital"]
+        [id, "Referral Submitted", description]
       );
     }
 
@@ -255,14 +299,14 @@ const closeReferral = async (req, res) => {
       });
     }
 
+    const { who, where } = await getActorLabel(req.user?.id, req.user?.facilityId);
+    const base = hasFeedback ? "Closed with feedback" : "Closed without feedback";
+    const closeDescription = who && where ? `${base} by ${who} at ${where}` : base;
+
     await pool.query(
       `INSERT INTO referral_events (referral_id, event_type, event_description)
        VALUES ($1, $2, $3)`,
-      [
-        id,
-        "Referral Closed",
-        hasFeedback ? "Closed with feedback" : "Closed without feedback",
-      ]
+      [id, "Referral Closed", closeDescription]
     );
 
     res.json(result.rows[0]);
@@ -538,10 +582,17 @@ const markArrived = async (req, res) => {
       return res.status(404).json({ message: "Referral not found" });
     }
 
+    const { who, where } = await getActorLabel(req.user?.id, req.user?.facilityId);
+    const arrivedDescription =
+      note ||
+      (who && where
+        ? `Marked arrived by ${who} at ${where}`
+        : "Patient arrived at receiving hospital");
+
     await pool.query(
       `INSERT INTO referral_events (referral_id, event_type, event_description)
        VALUES ($1, $2, $3)`,
-      [id, "Patient Arrived", note || "Patient arrived at receiving hospital"]
+      [id, "Patient Arrived", arrivedDescription]
     );
 
     res.json(result.rows[0]);
@@ -677,10 +728,15 @@ const receiveOfflineReferral = async (req, res) => {
       [referralNumber, patientId, hospitalFacilityId || null, diagnosis, urgency || null, chiefComplaint || null]
     );
 
+    const { who, where } = await getActorLabel(req.user?.id, hospitalFacilityId);
+    const qrDescription =
+      `Patient walked in with offline QR from ${referringFacility || "health post"}` +
+      (who && where ? `, received by ${who} at ${where}` : "");
+
     await pool.query(
       `INSERT INTO referral_events (referral_id, event_type, event_description)
        VALUES ($1, $2, $3)`,
-      [result.rows[0].id, "QR Received", `Patient walked in with offline QR from ${referringFacility || "health post"}`]
+      [result.rows[0].id, "QR Received", qrDescription]
     );
 
     res.status(201).json(result.rows[0]);

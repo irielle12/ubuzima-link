@@ -56,7 +56,13 @@ function NewReferral() {
     } catch (err) {
       console.error(err);
       try {
-        const cached = await db.facilities.toArray();
+        // The same facilities cache also holds this worker's own referring
+        // facility (put separately below), which is a Health Post, not a
+        // destination hospital — filter it back out, matching the server's
+        // own `type = 'DISTRICT_HOSPITAL'` restriction in getHospitals().
+        const cached = (await db.facilities.toArray()).filter(
+          (f) => f.type === "DISTRICT_HOSPITAL"
+        );
         setHospitals(cached);
       } catch (dbErr) {
         console.error(dbErr);

@@ -89,8 +89,20 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
   };
 
   const refreshAndUpdate = async (updated: any) => {
+    const referralId = updated?.id ?? selected?.id;
     setSelected((prev: any) => (prev ? { ...prev, ...updated } : prev));
     if (loadQueue) await loadQueue();
+
+    // Re-fetch the timeline too, so actions taken here (close, return
+    // referral) show up in the audit log immediately instead of only
+    // after closing and reopening the panel.
+    if (referralId) {
+      try {
+        setEvents(await getReferralEvents(referralId));
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   /* CLOSE */

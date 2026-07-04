@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   House, FileText, Wifi, User,
-  LogOut, Building2, IdCard, Mail, ShieldCheck, ArrowLeft,
+  LogOut, Building2, IdCard, Mail, ShieldCheck, ArrowLeft, KeyRound,
 } from "lucide-react";
-import { getUser, logout } from "../services/authApi";
+import { getUser, logout, changePassword } from "../services/authApi";
 import { getFacilityById } from "../services/facilityApi";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNotification } from "../contexts/NotificationContext";
 
 const ROLE_LABELS: Record<string, string> = {
   nurse: "Nurse",
@@ -21,6 +22,12 @@ function Profile() {
   const [user, setUser] = useState<any>(null);
   const [facility, setFacility] = useState<any>(null);
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     const currentUser = getUser();
     if (!currentUser) { navigate("/login"); return; }
@@ -31,8 +38,49 @@ function Profile() {
   }, [navigate]);
 
   const { t } = useLanguage();
+  const { success, error: notifyError } = useNotification();
 
   const handleLogout = () => { logout(); navigate("/"); };
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const handleChangePassword = async () => {
+    if (!navigator.onLine) {
+      notifyError(t("Connect to the internet to change your password."));
+      return;
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      notifyError(t("Please fill in all password fields."));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      notifyError(t("New password must be at least 6 characters."));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      notifyError(t("New password and confirmation do not match."));
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await changePassword(currentPassword, newPassword);
+      success(t("Password updated successfully."));
+      closePasswordModal();
+    } catch (err: any) {
+      notifyError(err.message || t("Failed to update password."));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -105,8 +153,26 @@ function Profile() {
         ))}
       </div>
 
-      {/* SIGN OUT */}
+      {/* RESET PASSWORD */}
       <div style={{ margin: "16px 16px 0" }}>
+        <button
+          onClick={() => setShowPasswordModal(true)}
+          style={{
+            width: "100%", padding: "13px",
+            borderRadius: 12, border: "1px solid #e2e8f0",
+            background: "white", color: "#334155",
+            fontSize: 14, fontWeight: 600,
+            cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}
+        >
+          <KeyRound size={15} />
+          {t("Reset Password")}
+        </button>
+      </div>
+
+      {/* SIGN OUT */}
+      <div style={{ margin: "12px 16px 0" }}>
         <button
           onClick={handleLogout}
           style={{
@@ -122,6 +188,58 @@ function Profile() {
           {t("Sign Out")}
         </button>
       </div>
+
+      {/* RESET PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="warning-modal">
+          <div className="warning-card" style={{ width: 320 }}>
+            <h3>{t("Reset Password")}</h3>
+
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+              {t("Current Password")}
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoFocus
+            />
+
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+              {t("New Password")}
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder={t("Minimum 6 characters")}
+            />
+
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+              {t("Confirm New Password")}
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+            />
+
+            <div className="warning-actions">
+              <button
+                className="primary-action-btn"
+                onClick={handleChangePassword}
+                disabled={saving}
+              >
+                {saving ? t("Saving...") : t("Update Password")}
+              </button>
+              <button className="secondary-action-btn" onClick={closePasswordModal} disabled={saving}>
+                {t("Cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BOTTOM NAV */}
       <nav className="bottom-nav-v2">
