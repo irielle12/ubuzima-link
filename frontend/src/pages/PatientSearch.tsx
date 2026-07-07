@@ -44,7 +44,14 @@ const loadPatients = async () => {
       data.map((p: any) => ({ ...p, synced: true }))
     );
 
-    setPatients(data);
+    // Patients registered offline and not yet synced to the server won't
+    // be in `data` at all — merge them in so they stay searchable until
+    // the sync job uploads them.
+    const unsynced = (await db.patients.toArray()).filter(
+      (p) => !p.synced
+    );
+
+    setPatients([...unsynced, ...data]);
   } catch (error) {
     console.error(error);
 
@@ -67,10 +74,10 @@ const loadPatients = async () => {
         `${patient.first_name} ${patient.last_name}`
           .toLowerCase()
           .includes(search) ||
-        patient.phone.includes(
+        (patient.phone ?? "").includes(
           searchTerm
         ) ||
-        patient.national_id.includes(
+        (patient.national_id ?? "").includes(
           searchTerm
         )
       );
