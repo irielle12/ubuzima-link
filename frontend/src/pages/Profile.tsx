@@ -8,6 +8,7 @@ import { getUser, logout, changePassword } from "../services/authApi";
 import { getFacilityById } from "../services/facilityApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
 
 const ROLE_LABELS: Record<string, string> = {
   nurse: "Nurse",
@@ -60,8 +61,9 @@ function Profile() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      notifyError(t("New password must be at least 6 characters."));
+    const policyError = passwordPolicyError(newPassword);
+    if (policyError) {
+      notifyError(t(policyError));
       return;
     }
 
@@ -212,7 +214,7 @@ function Profile() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder={t("Minimum 6 characters")}
+              placeholder={t(PASSWORD_HINT)}
             />
 
             <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>

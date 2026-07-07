@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNotification } from "../../contexts/NotificationContext";
+import { passwordPolicyError, PASSWORD_HINT } from "../../utils/passwordPolicy";
 import {
   getUsers,
   getUsersBin,
@@ -112,6 +113,15 @@ function UsersList() {
       setFormError("Name and password are required.");
       return;
     }
+
+    if (!editingUser) {
+      const policyError = passwordPolicyError(form.password);
+      if (policyError) {
+        setFormError(policyError);
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       setFormError("");
@@ -149,8 +159,9 @@ function UsersList() {
   };
 
   const handleResetPassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      setResetError("Password must be at least 6 characters.");
+    const policyError = passwordPolicyError(newPassword);
+    if (policyError) {
+      setResetError(policyError);
       return;
     }
     try {
@@ -453,7 +464,7 @@ function UsersList() {
                 type="text"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
+                placeholder={PASSWORD_HINT}
                 autoFocus
               />
             </div>
@@ -512,7 +523,11 @@ function UsersList() {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder={PASSWORD_HINT}
                 />
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#94a3b8" }}>
+                  This is a temporary password — the staff member must change it on first login.
+                </p>
               </div>
             )}
 

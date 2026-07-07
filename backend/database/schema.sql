@@ -20,17 +20,23 @@ CREATE TABLE facilities (
 -- USERS
 -- ============================================================
 CREATE TABLE users (
-  id            SERIAL PRIMARY KEY,
-  staff_id      VARCHAR NOT NULL UNIQUE,
-  first_name    VARCHAR NOT NULL,
-  last_name     VARCHAR NOT NULL,
-  email         VARCHAR UNIQUE,
-  password_hash TEXT    NOT NULL,
-  role          VARCHAR NOT NULL,  -- nurse | clinician | admin
-  facility_id   INTEGER REFERENCES facilities(id),
-  active        BOOLEAN DEFAULT true,
-  created_by    INTEGER REFERENCES users(id),
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id                       SERIAL PRIMARY KEY,
+  staff_id                 VARCHAR NOT NULL UNIQUE,
+  first_name               VARCHAR NOT NULL,
+  last_name                VARCHAR NOT NULL,
+  email                    VARCHAR UNIQUE,
+  password_hash            TEXT    NOT NULL,
+  role                     VARCHAR NOT NULL,  -- nurse | clinician | admin
+  facility_id              INTEGER REFERENCES facilities(id),
+  active                   BOOLEAN DEFAULT true,
+  created_by               INTEGER REFERENCES users(id),
+  created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  -- Auth hardening
+  failed_login_attempts    INTEGER NOT NULL DEFAULT 0,
+  locked_until             TIMESTAMP,               -- set on lockout, auto-clears once past
+  must_change_password     BOOLEAN NOT NULL DEFAULT false,
+  refresh_token_hash       TEXT,                     -- sha256 of the current refresh token (never store it raw)
+  refresh_token_expires_at TIMESTAMP
 );
 
 -- Back-fill the self-referencing FK on facilities now that users exists

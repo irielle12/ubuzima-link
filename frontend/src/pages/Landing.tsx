@@ -3,100 +3,122 @@ import {
   Stethoscope,
   Building2,
   ShieldCheck,
-  ChevronRight,
+  ArrowRight,
+  WifiOff,
+  QrCode,
+  Activity,
 } from "lucide-react";
+import BrandMark from "../components/BrandMark";
 
 function Landing() {
   const navigate = useNavigate();
 
   return (
     <div className="landing-v2">
+      <div className="landing-glow landing-glow-a" />
+      <div className="landing-glow landing-glow-b" />
 
-      <div className="landing-container">
+      <div className="landing-shell">
 
-        <div className="landing-header">
+        <div className="landing-brand">
+          <div className="landing-mark">
+            <BrandMark size={42} />
+          </div>
 
-          <h1>Ubuzima-Link</h1>
-
-          <p>
-            Healthcare Referral Management System
-          </p>
-
+          <div className="landing-brand-text">
+            <h1>Ubuzima-Link</h1>
+            <p className="landing-tagline">Healthcare Referral Management System</p>
+          </div>
         </div>
 
-        <div className="portal-list">
+        <div className="landing-hero">
 
-          <button
-            className="portal-card"
-            onClick={() => navigate("/login")}
-          >
-            <div className="portal-icon">
-              <Stethoscope size={24} />
+          <div className="landing-pitch">
+            <span className="landing-eyebrow">Built for Rwanda's health posts</span>
+
+            <h2>Referrals that keep moving, even when the network doesn't.</h2>
+
+            <p>
+              Ubuzima-Link connects health posts and district hospitals with
+              offline-first referrals, instant QR handoffs, and automatic
+              sync the moment connectivity returns.
+            </p>
+
+            <div className="landing-features">
+              <div className="landing-feature">
+                <WifiOff size={15} />
+                <span>Offline First</span>
+              </div>
+              <div className="landing-feature">
+                <QrCode size={15} />
+                <span>Secure QR Transfer</span>
+              </div>
+              <div className="landing-feature">
+                <Activity size={15} />
+                <span>Healthcare Ready</span>
+              </div>
             </div>
+          </div>
 
-            <div className="portal-content">
-              <h3>Health Worker Portal</h3>
+          <div className="portal-list">
 
-              <p>
-                Create and manage patient referrals
-              </p>
-            </div>
+            <button
+              className="portal-card portal-card-worker"
+              onClick={() => navigate("/login")}
+            >
+              <div className="portal-icon">
+                <Stethoscope size={22} />
+              </div>
 
-            <ChevronRight size={20} />
-          </button>
+              <div className="portal-content">
+                <h3>Health Worker Portal</h3>
+                <p>Create and manage patient referrals</p>
+              </div>
 
-          <button
-            className="portal-card"
-            onClick={() => navigate("/hospital-login")}
-          >
-            <div className="portal-icon">
-              <Building2 size={24} />
-            </div>
+              <ArrowRight size={18} className="portal-arrow" />
+            </button>
 
-            <div className="portal-content">
-              <h3>Hospital Staff Portal</h3>
+            <button
+              className="portal-card portal-card-hospital"
+              onClick={() => navigate("/hospital-login")}
+            >
+              <div className="portal-icon">
+                <Building2 size={22} />
+              </div>
 
-              <p>
-                Receive and process referrals
-              </p>
-            </div>
+              <div className="portal-content">
+                <h3>Hospital Staff Portal</h3>
+                <p>Receive and process referrals</p>
+              </div>
 
-            <ChevronRight size={20} />
-          </button>
+              <ArrowRight size={18} className="portal-arrow" />
+            </button>
 
-          <button
-            className="portal-card"
-            onClick={() => navigate("/login?role=admin")}
-          >
-            <div className="portal-icon">
-              <ShieldCheck size={24} />
-            </div>
+            <button
+              className="portal-card portal-card-admin"
+              onClick={() => navigate("/login?role=admin")}
+            >
+              <div className="portal-icon">
+                <ShieldCheck size={22} />
+              </div>
 
-            <div className="portal-content">
-              <h3>Administrator Portal</h3>
+              <div className="portal-content">
+                <h3>Administrator Portal</h3>
+                <p>Manage users, facilities and reports</p>
+              </div>
 
-              <p>
-                Manage users, facilities and reports
-              </p>
-            </div>
+              <ArrowRight size={18} className="portal-arrow" />
+            </button>
 
-            <ChevronRight size={20} />
-          </button>
+          </div>
 
         </div>
 
         <div className="landing-footer">
-
-          <span>Offline First</span>
-
-          <span>Secure QR Transfer</span>
-
-          <span>Healthcare Ready</span>
-
+          <span>BSc. Software Engineering Capstone &middot; African Leadership University</span>
         </div>
 
       </div>
-
     </div>
   );
 }

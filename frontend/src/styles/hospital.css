@@ -598,25 +598,110 @@
 
 /* HOSPITAL LOGIN — DESKTOP */
 .hospital-login-shell {
+  position: relative;
+  overflow: hidden;
+
   min-height: 100vh;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f9 55%, #eaf3fb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* Role accent — set per login page so the glow/badge tint matches the
+   portal color used for that role on the landing page. */
+.auth-worker { --auth-accent-from: #2dd4bf; --auth-accent-to: #0d9488; --auth-accent-glow-a: #5eead4; --auth-accent-glow-b: #99f6e4; }
+.auth-hospital { --auth-accent-from: #60a5fa; --auth-accent-to: #2563eb; --auth-accent-glow-a: #93c5fd; --auth-accent-glow-b: #bfdbfe; }
+.auth-admin { --auth-accent-from: #a78bfa; --auth-accent-to: #7c3aed; --auth-accent-glow-a: #c4b5fd; --auth-accent-glow-b: #ddd6fe; }
+.auth-security { --auth-accent-from: #14b8a6; --auth-accent-to: #2563eb; --auth-accent-glow-a: #5eead4; --auth-accent-glow-b: #93c5fd; }
+
+.auth-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  will-change: transform;
+  animation: landing-float 16s ease-in-out infinite alternate;
+}
+
+.auth-glow-a {
+  width: 380px;
+  height: 380px;
+  top: -120px;
+  left: -100px;
+  background: radial-gradient(circle, var(--auth-accent-glow-a, #5eead4) 0%, transparent 70%);
+}
+
+.auth-glow-b {
+  width: 420px;
+  height: 420px;
+  bottom: -160px;
+  right: -120px;
+  background: radial-gradient(circle, var(--auth-accent-glow-b, #93c5fd) 0%, transparent 70%);
+  animation-delay: -6s;
 }
 
 .hospital-login-card {
-  background: white;
+  position: relative;
+  z-index: 1;
+
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 40px;
   width: 420px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  max-width: 100%;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.1);
+  box-sizing: border-box;
+
+  opacity: 0;
+  animation: landing-fade-up 0.5s ease-out 0.05s forwards;
+}
+
+.hospital-login-mark {
+  display: flex;
+  justify-content: center;
+
+  margin-bottom: 18px;
+
+  filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.22));
 }
 
 .hospital-login-logo {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
+}
+
+.hospital-login-role-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  width: fit-content;
+  margin: 0 auto 24px;
+  padding: 6px 16px;
+
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--auth-accent-from), var(--auth-accent-to));
+  color: white;
+
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow,
+  .hospital-login-card {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }
 
 .hospital-login-logo h1 {
@@ -629,12 +714,6 @@
   margin: 0;
   font-size: 13px;
   color: #64748b;
-}
-
-.hospital-login-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 0 -40px 24px;
 }
 
 .hospital-login-card label {

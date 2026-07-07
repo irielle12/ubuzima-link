@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 require("dotenv").config();
 
 const app = express();
@@ -11,6 +12,23 @@ const referralEventRoutes = require("./src/routes/referralEventRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const returnReferralRoutes = require("./src/routes/returnReferralRoutes");
+
+// Render/Vercel terminate TLS in front of this app — trust their
+// X-Forwarded-Proto header so req.secure reflects the real client protocol.
+app.set("trust proxy", 1);
+
+app.use(helmet());
+
+// HTTPS only in production. Left off in local dev, where there's no TLS
+// termination in front of the server at all.
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    if (req.secure || req.headers["x-forwarded-proto"] === "https") {
+      return next();
+    }
+    return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  });
+}
 
 app.use(cors());
 app.use(express.json());

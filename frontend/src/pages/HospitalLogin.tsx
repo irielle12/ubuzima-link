@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Building2 } from "lucide-react";
 import { login as loginRequest, getUser } from "../services/authApi";
+import BrandMark from "../components/BrandMark";
 import "../styles/hospital.css";
 
 function HospitalLogin() {
@@ -27,7 +29,11 @@ function HospitalLogin() {
         JSON.stringify({ hospitalId: user?.facilityId })
       );
 
-      navigate("/hospital/queue");
+      if (user?.mustChangePassword) {
+        navigate("/force-password-change");
+      } else {
+        navigate("/hospital/queue");
+      }
     } catch (err: any) {
       setError(err.message || "Invalid Staff ID or password.");
     } finally {
@@ -36,18 +42,24 @@ function HospitalLogin() {
   };
 
   return (
-    <div className="hospital-login-shell">
+    <div className="hospital-login-shell auth-hospital">
+      <div className="auth-glow auth-glow-a" />
+      <div className="auth-glow auth-glow-b" />
+
       <div className="hospital-login-card">
+        <div className="hospital-login-mark">
+          <BrandMark size={44} />
+        </div>
+
         <div className="hospital-login-logo">
           <h1>Ubuzima-Link</h1>
           <p>Healthcare Referral Management System</p>
         </div>
 
-        <div className="hospital-login-divider" />
-
-        <h2 style={{ margin: "0 0 20px", fontSize: 17, color: "#0f172a" }}>
-          Hospital Staff Login
-        </h2>
+        <div className="hospital-login-role-badge">
+          <Building2 size={14} />
+          <span>Hospital Staff Login</span>
+        </div>
 
         <label>Staff ID</label>
         <input

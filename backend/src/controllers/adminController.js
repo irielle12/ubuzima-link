@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const { hashPassword } = require("../utils/hashPassword");
+const { validatePasswordStrength } = require("../utils/passwordPolicy");
 
 const ROLE_PREFIX = { nurse: "NURSE", clinician: "CLIN", admin: "ADMIN" };
 
@@ -59,13 +60,18 @@ const createUser = async (req, res) => {
       });
     }
 
+    const policyError = validatePasswordStrength(password);
+    if (policyError) {
+      return res.status(400).json({ message: policyError });
+    }
+
     const staffId = await generateStaffId(role);
     const passwordHash = await hashPassword(password);
 
     const result = await pool.query(
       `INSERT INTO users
-       (staff_id, first_name, last_name, email, password_hash, role, facility_id, active, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8)
+       (staff_id, first_name, last_name, email, password_hash, role, facility_id, active, created_by, must_change_password)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,true)
        RETURNING id, staff_id, first_name, last_name, email, role, facility_id, active, created_at`,
       [staffId, firstName, lastName, email || null, passwordHash, role, facilityId || null, req.user.id]
     );
@@ -132,8 +138,9 @@ const resetPassword = async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    const policyError = validatePasswordStrength(password);
+    if (policyError) {
+      return res.status(400).json({ message: policyError });
     }
 
     const passwordHash = await hashPassword(password);

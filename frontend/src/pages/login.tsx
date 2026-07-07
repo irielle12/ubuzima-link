@@ -3,7 +3,9 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { Stethoscope, ShieldCheck } from "lucide-react";
 import { login as loginRequest, getUser } from "../services/authApi";
+import BrandMark from "../components/BrandMark";
 import "../styles/hospital.css";
 
 function Login() {
@@ -51,7 +53,9 @@ function Login() {
 
       const loggedInUser = getUser();
 
-      if (loggedInUser?.role === "admin") {
+      if (loggedInUser?.mustChangePassword) {
+        navigate("/force-password-change");
+      } else if (loggedInUser?.role === "admin") {
         navigate("/admin/facilities");
       } else {
         navigate("/dashboard");
@@ -64,19 +68,25 @@ function Login() {
   };
 
   return (
-    <div className="hospital-login-shell">
+    <div className={`hospital-login-shell ${role === "admin" ? "auth-admin" : "auth-worker"}`}>
+      <div className="auth-glow auth-glow-a" />
+      <div className="auth-glow auth-glow-b" />
+
       <div className="hospital-login-card">
+
+        <div className="hospital-login-mark">
+          <BrandMark size={44} />
+        </div>
 
         <div className="hospital-login-logo">
           <h1>Ubuzima-Link</h1>
           <p>Healthcare Referral Management System</p>
         </div>
 
-        <div className="hospital-login-divider" />
-
-        <h2 style={{ margin: "0 0 20px", fontSize: 17, color: "#0f172a" }}>
-          {getTitle()}
-        </h2>
+        <div className="hospital-login-role-badge">
+          {role === "admin" ? <ShieldCheck size={14} /> : <Stethoscope size={14} />}
+          <span>{getTitle()}</span>
+        </div>
 
         <label>Staff ID</label>
         <input

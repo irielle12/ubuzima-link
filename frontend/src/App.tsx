@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -6,9 +7,11 @@ import {
 } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { initSessionRefresh } from "./services/authApi";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/login";
+import ForcePasswordChange from "./pages/ForcePasswordChange";
 import Dashboard from "./pages/Dashboard";
 import NewReferral from "./pages/NewReferral";
 import QRView from "./pages/QRView";
@@ -38,6 +41,10 @@ import HospitalReports from "./pages/hospital/HospitalReports";
 import ReceiveQR from "./pages/hospital/ReceiveQR";
 
 function App() {
+  useEffect(() => {
+    initSessionRefresh();
+  }, []);
+
   return (
     <LanguageProvider>
     <NotificationProvider>
@@ -51,6 +58,10 @@ function App() {
         <Route
           path="/login"
           element={<Login />}
+        />
+        <Route
+          path="/force-password-change"
+          element={<ForcePasswordChange />}
         />
         {/* Health worker routes — nurse role required */}
         <Route element={<RequireNurse />}>

@@ -50,6 +50,7 @@ export interface CachedCredential {
   salt: string;
   user: any;
   token: string;
+  refreshToken?: string;
   cachedAt: string;
 }
 
