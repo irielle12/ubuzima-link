@@ -12,6 +12,7 @@ import {
   recordConnectivityChange,
 } from "../services/syncStatus";
 import ConnectionStatus from "../components/ConnectionStatus";
+import { getUnseenClosedReferrals, markClosedReferralsSeen } from "../services/notifications";
 
 import {
   Plus,
@@ -183,16 +184,13 @@ function Dashboard() {
     const closed = referrals.filter((r: any) => r.workflow_status === "Closed");
 
     setClosedReferrals(closed);
-
-    const seenKey = `seenClosedCount_${user.facilityId}`;
-    const seenCount = parseInt(localStorage.getItem(seenKey) || "0", 10);
-    setNotifications(Math.max(0, closed.length - seenCount));
+    setNotifications(getUnseenClosedReferrals(user.facilityId, closed).length);
   };
 
   const handleBellClick = () => {
     const user = getUser();
     if (user?.facilityId) {
-      localStorage.setItem(`seenClosedCount_${user.facilityId}`, closedReferrals.length.toString());
+      markClosedReferralsSeen(user.facilityId, closedReferrals);
     }
     setNotifications(0);
     navigate("/work-queue/closed");

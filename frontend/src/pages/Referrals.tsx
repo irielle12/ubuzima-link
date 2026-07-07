@@ -5,6 +5,7 @@ import { getReferralsBySource } from "../services/referralApi";
 import { getUser } from "../services/authApi";
 import ConnectionStatus from "../components/ConnectionStatus";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getUnseenClosedReferrals, markClosedReferralsSeen } from "../services/notifications";
 
 import {
   House,
@@ -117,21 +118,21 @@ function Referrals() {
     (r) => r.workflow_status === "Pending Hospital Review"
   ).length;
 
-  const closed = referrals.filter(
+  const closedReferrals = referrals.filter(
     (r) => r.workflow_status === "Closed"
-  ).length;
+  );
+  const closed = closedReferrals.length;
 
   const feedbackReceived = referrals.filter(hasFeedback).length;
 
   const user = getUser();
-  const seenClosedCount = user?.facilityId
-    ? parseInt(localStorage.getItem(`seenClosedCount_${user.facilityId}`) || "0", 10)
+  const unseenClosed = user?.facilityId
+    ? getUnseenClosedReferrals(user.facilityId, closedReferrals).length
     : 0;
-  const unseenClosed = Math.max(0, closed - seenClosedCount);
 
   const handleBellClick = () => {
     if (user?.facilityId) {
-      localStorage.setItem(`seenClosedCount_${user.facilityId}`, closed.toString());
+      markClosedReferralsSeen(user.facilityId, closedReferrals);
     }
     navigate("/work-queue/closed");
   };

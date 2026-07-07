@@ -6,6 +6,7 @@ import { db } from "../services/db";
 import ConnectionStatus from "../components/ConnectionStatus";
 import { FileText, RefreshCw } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { markClosedReferralsSeen } from "../services/notifications";
 
 const TITLE_BY_SLUG: Record<string, string> = {
   "pending-review": "Pending Review",
@@ -70,8 +71,8 @@ function WorkQueueList() {
       await db.cachedReferrals.bulkPut(data);
 
       if (status === "closed") {
-        const closedCount = data.filter((r: any) => r.workflow_status === "Closed").length;
-        localStorage.setItem(`seenClosedCount_${user.facilityId}`, closedCount.toString());
+        const closedList = data.filter((r: any) => r.workflow_status === "Closed");
+        markClosedReferralsSeen(user.facilityId, closedList);
       }
     } catch (err: any) {
       // Offline or unreachable — fall back to the cached list.

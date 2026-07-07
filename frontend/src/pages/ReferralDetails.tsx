@@ -5,6 +5,8 @@ import { getReferralById } from "../services/referralApi";
 import { getReturnReferral } from "../services/returnReferralApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import { db } from "../services/db";
+import { getUser } from "../services/authApi";
+import { markClosedReferralsSeen } from "../services/notifications";
 import {
   House, FileText, Wifi, User,
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
@@ -38,6 +40,11 @@ function ReferralDetails() {
       const data = await getReferralById(id as string);
       setReferral(data);
       await db.cachedReferrals.put(data);
+
+      if (data.workflow_status === "Closed") {
+        const user = getUser();
+        if (user?.facilityId) markClosedReferralsSeen(user.facilityId, [data]);
+      }
     } catch (err: any) {
       if (err.status === 404) {
         // Genuinely deleted server-side — don't resurrect a stale local
