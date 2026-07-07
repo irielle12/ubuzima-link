@@ -28,18 +28,37 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'Ubuzima-Link',
+        name: 'Ubuzima-Link Health Post',
         short_name: 'Ubuzima-Link',
-        description: 'Offline-first healthcare referral management',
-        start_url: '/',
+        description: 'Offline-first referral tool for health post workers',
+        // Installed app opens straight into the nurse workflow. Hospital/Admin
+        // stay reachable as normal browser tabs — they aren't install targets.
+        start_url: '/dashboard',
+        scope: '/',
         display: 'standalone',
         background_color: '#f8fafc',
         theme_color: '#2563eb',
         icons: [
           {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: '/pwa-64x64.png',
+            sizes: '64x64',
+            type: 'image/png',
+          },
+          {
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: '/maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
