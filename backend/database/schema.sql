@@ -3,17 +3,20 @@
 -- FACILITIES
 -- ============================================================
 CREATE TABLE facilities (
-  id          SERIAL PRIMARY KEY,
-  code        VARCHAR NOT NULL UNIQUE,
-  name        VARCHAR NOT NULL,
-  type        VARCHAR NOT NULL,  -- HEALTH_POST | HEALTH_CENTER | DISTRICT_HOSPITAL
-  district    VARCHAR NOT NULL,
-  sector      VARCHAR,
-  phone       VARCHAR,
-  email       VARCHAR,
-  active      BOOLEAN NOT NULL DEFAULT true,
-  created_by  INTEGER,           -- FK set after users table exists (see below)
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id               SERIAL PRIMARY KEY,
+  code             VARCHAR NOT NULL UNIQUE,
+  name             VARCHAR NOT NULL,
+  type             VARCHAR NOT NULL,  -- HEALTH_POST | HEALTH_CENTER | DISTRICT_HOSPITAL
+  district         VARCHAR NOT NULL,
+  sector           VARCHAR,
+  phone            VARCHAR,
+  email            VARCHAR,
+  active           BOOLEAN NOT NULL DEFAULT true,
+  created_by       INTEGER,           -- FK set after users table exists (see below)
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  -- Per-urgency bed/capacity status a DISTRICT_HOSPITAL sets for itself;
+  -- health posts read this before choosing where to send a referral.
+  capacity_status  JSONB NOT NULL DEFAULT '{"Emergency": "available", "Urgent": "available", "Routine": "available"}'
 );
 
 -- ============================================================

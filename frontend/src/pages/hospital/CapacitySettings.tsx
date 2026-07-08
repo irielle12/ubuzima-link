@@ -63,9 +63,7 @@ function CapacitySettings() {
   };
 
   if (loading) {
-    return (
-      <p style={{ color: "#64748b", padding: 16 }}>Loading capacity settings...</p>
-    );
+    return <div className="hospital-empty">Loading capacity settings...</div>;
   }
 
   return (
@@ -76,7 +74,19 @@ function CapacitySettings() {
       </p>
 
       {error && (
-        <p style={{ color: "#dc2626", marginBottom: 16, fontSize: 14 }}>{error}</p>
+        <div
+          style={{
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: 10,
+            padding: "10px 14px",
+            marginBottom: 16,
+            color: "#dc2626",
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
       )}
 
       <div className="capacity-grid">

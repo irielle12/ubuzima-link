@@ -111,13 +111,7 @@ function Profile() {
 
       {/* AVATAR + NAME */}
       <div style={{ textAlign: "center", padding: "28px 20px 24px" }}>
-        <div style={{
-          width: 80, height: 80, borderRadius: "50%",
-          background: "#2563eb", color: "white",
-          fontSize: 26, fontWeight: 700,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 14px",
-        }}>
+        <div className="avatar-circle" style={{ width: 80, height: 80, fontSize: 26 }}>
           {initials || <User size={28} />}
         </div>
 
@@ -135,13 +129,9 @@ function Profile() {
       </div>
 
       {/* INFO CARD */}
-      <div style={{ margin: "0 16px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-        {rows.map((row, i) => (
-          <div key={row.label} style={{
-            display: "flex", alignItems: "center", gap: 14,
-            padding: "14px 18px",
-            borderBottom: i < rows.length - 1 ? "1px solid #f1f5f9" : "none",
-          }}>
+      <div className="info-card" style={{ margin: "0 16px" }}>
+        {rows.map((row) => (
+          <div key={row.label} className="info-row" style={{ padding: "14px 18px", gap: 14 }}>
             <span style={{ color: "#94a3b8", display: "flex", flexShrink: 0 }}>{row.icon}</span>
             <div>
               <p style={{ margin: 0, fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -158,15 +148,9 @@ function Profile() {
       {/* RESET PASSWORD */}
       <div style={{ margin: "16px 16px 0" }}>
         <button
+          className="secondary-action-btn"
           onClick={() => setShowPasswordModal(true)}
-          style={{
-            width: "100%", padding: "13px",
-            borderRadius: 12, border: "1px solid #e2e8f0",
-            background: "white", color: "#334155",
-            fontSize: 14, fontWeight: 600,
-            cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
           <KeyRound size={15} />
           {t("Reset Password")}
@@ -176,14 +160,11 @@ function Profile() {
       {/* SIGN OUT */}
       <div style={{ margin: "12px 16px 0" }}>
         <button
+          className="secondary-action-btn"
           onClick={handleLogout}
           style={{
-            width: "100%", padding: "13px",
-            borderRadius: 12, border: "1px solid #bfdbfe",
-            background: "white", color: "#2563eb",
-            fontSize: 14, fontWeight: 600,
-            cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            borderColor: "#bfdbfe", color: "#2563eb",
           }}
         >
           <LogOut size={15} />

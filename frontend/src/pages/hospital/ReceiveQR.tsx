@@ -253,12 +253,12 @@ function ReceiveQR() {
         {/* LEFT — SCANNER */}
         <div>
           <div
+            className="hospital-scan-card"
             style={{
-              background: "white",
               border: scanFlash ? "2px solid #16a34a" : "1px solid #e2e8f0",
-              borderRadius: 8,
               padding: 24,
               transition: "border-color 0.15s",
+              animation: "none",
             }}
           >
             <h2 style={{ margin: "0 0 4px", fontSize: 16, color: "#0f172a" }}>
@@ -377,13 +377,8 @@ function ReceiveQR() {
 
           {/* SEARCH BY REFERENCE NUMBER */}
           <div
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: 8,
-              padding: 24,
-              marginTop: 20,
-            }}
+            className="hospital-scan-card"
+            style={{ padding: 24, marginTop: 20, animation: "none" }}
           >
             <h2 style={{ margin: "0 0 4px", fontSize: 16, color: "#0f172a" }}>
               Search by Reference Number
@@ -419,14 +414,8 @@ function ReceiveQR() {
         <div ref={resultRef}>
           {result.type === "idle" && (
             <div
-              style={{
-                background: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: 8,
-                padding: 40,
-                textAlign: "center",
-                color: "#94a3b8",
-              }}
+              className="hospital-scan-card"
+              style={{ padding: 40, textAlign: "center", color: "#94a3b8", animation: "none" }}
             >
               <p style={{ fontSize: 14 }}>
                 Scan a patient's QR code or search by reference number to see the referral here.
@@ -436,29 +425,15 @@ function ReceiveQR() {
 
           {result.type === "loading" && (
             <div
-              style={{
-                background: "white",
-                border: "1px solid #e2e8f0",
-                borderRadius: 8,
-                padding: 40,
-                textAlign: "center",
-                color: "#64748b",
-                fontSize: 14,
-              }}
+              className="hospital-scan-card"
+              style={{ padding: 40, textAlign: "center", color: "#64748b", fontSize: 14 }}
             >
               Looking up referral…
             </div>
           )}
 
           {result.type === "wrong_facility" && (
-            <div
-              style={{
-                background: "white",
-                border: "1px solid #fbbf24",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
+            <div className="hospital-scan-card" style={{ border: "1px solid #fbbf24" }}>
               <div
                 style={{
                   padding: "12px 20px",
@@ -485,14 +460,7 @@ function ReceiveQR() {
           )}
 
           {result.type === "error" && (
-            <div
-              style={{
-                background: "white",
-                border: "1px solid #fecaca",
-                borderRadius: 8,
-                padding: 24,
-              }}
-            >
+            <div className="hospital-scan-card" style={{ border: "1px solid #fecaca", padding: 24 }}>
               <p style={{ color: "#dc2626", fontSize: 14, margin: "0 0 12px", lineHeight: 1.5 }}>
                 {result.message}
               </p>
@@ -503,14 +471,7 @@ function ReceiveQR() {
           )}
 
           {result.type === "found" && (
-            <div
-              style={{
-                background: "white",
-                border: "1px solid #bbf7d0",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
+            <div className="hospital-scan-card" style={{ border: "1px solid #bbf7d0" }}>
               <div
                 style={{
                   padding: "12px 20px",
@@ -557,14 +518,7 @@ function ReceiveQR() {
           )}
 
           {result.type === "unsynced" && (
-            <div
-              style={{
-                background: "white",
-                border: "1px solid #fed7aa",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
+            <div className="hospital-scan-card" style={{ border: "1px solid #fed7aa" }}>
               <div
                 style={{
                   padding: "12px 20px",

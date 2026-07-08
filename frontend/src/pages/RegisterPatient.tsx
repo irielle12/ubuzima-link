@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Baby } from "lucide-react";
 import { createPatient } from "../services/patientApi";
 import type { PatientDuplicate } from "../services/patientApi";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -158,29 +158,29 @@ function CreatePatient() {
 
         {/* BABY TOGGLE */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 16,
-            padding: "10px 14px",
-            background: isBaby ? "#eff6ff" : "#f8fafc",
-            border: `1px solid ${isBaby ? "#93c5fd" : "#e2e8f0"}`,
-            borderRadius: 8,
-            cursor: "pointer",
-          }}
+          className={`baby-toggle-card ${isBaby ? "active" : ""}`}
           onClick={() => {
             setIsBaby(!isBaby);
             setNationalId("");
             setGuardianNationalId("");
           }}
         >
-          <input
-            type="checkbox"
-            checked={isBaby}
-            readOnly
-            style={{ width: 16, height: 16, cursor: "pointer" }}
-          />
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              flexShrink: 0,
+              borderRadius: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: isBaby ? "#2563eb" : "#e2e8f0",
+              color: isBaby ? "white" : "#64748b",
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+          >
+            <Baby size={18} />
+          </div>
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
               {t("This patient is a baby / has no National ID")}

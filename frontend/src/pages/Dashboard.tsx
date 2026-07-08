@@ -68,6 +68,9 @@ function Dashboard() {
   const [offlineSince, setOfflineSince] =
     useState<number | null>(null);
 
+  const [hospitals, setHospitals] =
+    useState<any[]>([]);
+
   useEffect(() => {
     loadNotifications();
     loadFacility();
@@ -154,10 +157,19 @@ function Dashboard() {
   // while online first.
   const loadHospitals = async () => {
     try {
-      const hospitals = await getHospitals();
-      await db.facilities.bulkPut(hospitals);
+      const data = await getHospitals();
+      setHospitals(data);
+      await db.facilities.bulkPut(data);
     } catch (err) {
       console.error(err);
+      try {
+        const cached = (await db.facilities.toArray()).filter(
+          (f: any) => f.type === "DISTRICT_HOSPITAL"
+        );
+        setHospitals(cached);
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
     }
   };
 
@@ -288,7 +300,9 @@ function Dashboard() {
             }
           >
 
-            <Plus size={28} />
+            <div className="action-icon blue">
+              <Plus size={24} />
+            </div>
 
             <span>{t("Find Patient")}</span>
 
@@ -303,7 +317,9 @@ function Dashboard() {
             }
           >
 
-            <User size={28} />
+            <div className="action-icon teal">
+              <User size={24} />
+            </div>
 
             <span>{t("Register Patient")}</span>
 
@@ -320,7 +336,16 @@ function Dashboard() {
   <h2>{t("Facility Reports")}</h2>
 
   {statsLoading && (
-    <div className="details-card">{t("Loading reports...")}</div>
+    <div className="queue-grid">
+      <div className="queue-card">
+        <div className="stat-skeleton" style={{ width: "60%", height: 28, margin: "0 auto 8px" }} />
+        <div className="stat-skeleton" style={{ width: "80%", height: 14, margin: "0 auto" }} />
+      </div>
+      <div className="queue-card">
+        <div className="stat-skeleton" style={{ width: "40%", height: 28, margin: "0 auto 8px" }} />
+        <div className="stat-skeleton" style={{ width: "70%", height: 14, margin: "0 auto" }} />
+      </div>
+    </div>
   )}
 
   {!statsLoading && statsError && (
@@ -341,7 +366,7 @@ function Dashboard() {
 
     <div className="queue-grid">
 
-      <div className="queue-card">
+      <div className="queue-card stat-teal">
 
         <h3>
           {formatFeedbackRate(stats)}
@@ -355,7 +380,7 @@ function Dashboard() {
 
       </div>
 
-      <div className="queue-card">
+      <div className="queue-card stat-blue">
 
         <h3>
           {stats?.referralsThisWeek ?? "—"}
@@ -371,6 +396,41 @@ function Dashboard() {
   )}
 
 </section>
+
+{/* HOSPITAL AVAILABILITY */}
+
+{hospitals.length > 0 && (
+  <section className="dashboard-section">
+
+    <h2 style={{ marginBottom: 2 }}>{t("Hospital Availability")}</h2>
+    <p className="hospital-availability-subtitle">
+      {t("Emergency · Urgent · Routine capacity, before you refer")}
+    </p>
+
+    <div className="hospital-availability-grid">
+      {hospitals.map((h) => {
+        const status = h.capacity_status || {};
+        return (
+          <div key={h.id} className="hospital-availability-card">
+            <p className="hospital-availability-card-name">{h.name}</p>
+            <div className="hospital-availability-card-chips">
+              <span className={`capacity-summary-chip ${status.Emergency || "available"}`}>
+                {t("Emergency")}
+              </span>
+              <span className={`capacity-summary-chip ${status.Urgent || "available"}`}>
+                {t("Urgent")}
+              </span>
+              <span className={`capacity-summary-chip ${status.Routine || "available"}`}>
+                {t("Routine")}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+  </section>
+)}
 
 {/* ALERTS */}
 

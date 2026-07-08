@@ -19,6 +19,8 @@ export const rw: Record<string, string> = {
   "Retry Sync": "Gerageza guhuza nanone",
   "Offline since": "Nta internet kuva saa",
   "View hospital updates": "Reba amakuru y'ibitaro",
+  "Hospital Availability": "Ubushobozi bw'ibitaro",
+  "Emergency · Urgent · Routine capacity, before you refer": "Ihutirwa · Bihutirwa · Bisanzwe, mbere yo kohereza",
 
   // ── Patient Search ──
   "Search by patient name, phone number, or national ID": "Shakisha izina, nimero ya telefoni, cyangwa indangamuntu",
@@ -112,6 +114,14 @@ export const rw: Record<string, string> = {
   "Emergency — requires immediate attention": "Ikibazo cy'ihutirwa — gikenewe ubu nyuma",
   "Receiving Hospital": "Ibitaro bikirira",
   "Select Hospital": "Hitamo ibitaro",
+  "Current capacity at": "Ubushobozi buriho kuri",
+  "Emergency": "Ihutirwa",
+  "Urgent": "Bihutirwa",
+  "Routine": "Bisanzwe",
+  "is not accepting": "ntibyakira",
+  "has limited capacity for": "bifite ubushobozi buke ku",
+  "referrals right now. You may still send this referral.": "amatumwa ubu. Urashobora kandi kohereza ubu butumwa.",
+  "referrals.": "amatumwa.",
   "Referring Facility": "Ivuriro ryohereza",
   "Referring Provider": "Umuganga wohereza",
   "Loading…": "Gutangira...",

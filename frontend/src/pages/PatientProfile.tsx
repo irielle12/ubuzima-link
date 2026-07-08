@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash } from "lucide-react";
+import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash, FileClock } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getPatientById, getPatientReferrals } from "../services/patientApi";
 import { db } from "../services/db";
@@ -118,7 +118,7 @@ function PatientProfile() {
   ];
 
   return (
-    <div className="patient-search-page" style={{ background: "#f1f5f9" }}>
+    <div className="patient-search-page">
 
       {/* HEADER */}
       <div className="patient-header">
@@ -132,13 +132,7 @@ function PatientProfile() {
 
       {/* AVATAR + NAME */}
       <div style={{ textAlign: "center", padding: "20px 20px 20px" }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: "50%",
-          background: "#0891b2", color: "white",
-          fontSize: 24, fontWeight: 700,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 12px",
-        }}>
+        <div className="avatar-circle teal" style={{ width: 72, height: 72, fontSize: 24 }}>
           {initials || <User size={24} />}
         </div>
         <h2 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
@@ -154,16 +148,12 @@ function PatientProfile() {
       </div>
 
       {/* INFO CARD */}
-      <div style={{ margin: "0 16px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0" }}>
-        {infoRows.map((row, i) => (
-          <div key={row.label} style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "12px 16px",
-            borderBottom: i < infoRows.length - 1 ? "1px solid #f1f5f9" : "none",
-          }}>
-            <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
-            <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+      <div className="info-card" style={{ margin: "0 16px" }}>
+        {infoRows.map((row) => (
+          <div key={row.label} className="info-row">
+            <span className="info-row-icon">{row.icon}</span>
+            <span className="info-row-label">{row.label}</span>
+            <span className="info-row-value">{row.value}</span>
           </div>
         ))}
       </div>
@@ -175,22 +165,22 @@ function PatientProfile() {
         </p>
 
         {referrals.length === 0 ? (
-          <div style={{ background: "white", borderRadius: 12, border: "1px solid #e2e8f0", padding: "20px 16px", textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
-            {t("No referrals found.")}
+          <div className="empty-patient-state" style={{ padding: "24px 16px" }}>
+            <div className="empty-state-icon" style={{ width: 44, height: 44 }}>
+              <FileClock size={20} />
+            </div>
+            <p style={{ margin: 0, color: "#94a3b8", fontSize: 14 }}>{t("No referrals found.")}</p>
           </div>
         ) : (
-          <div style={{ background: "white", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-            {referrals.map((ref, i) => (
+          <div className="info-card" style={{ margin: 0 }}>
+            {referrals.map((ref) => (
               <div
                 key={ref.id}
+                className="info-row"
                 onClick={() => navigate(`/referral-details/${ref.id}`)}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "12px 16px", cursor: "pointer",
-                  borderBottom: i < referrals.length - 1 ? "1px solid #f1f5f9" : "none",
-                }}
+                style={{ cursor: "pointer" }}
               >
-                <div>
+                <div style={{ flex: 1 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{ref.referral_number}</p>
                   <p style={{ margin: "2px 0 0", fontSize: 12, color: "#94a3b8" }}>{new Date(ref.created_at).toLocaleDateString()}</p>
                 </div>
@@ -207,13 +197,8 @@ function PatientProfile() {
       {/* CREATE REFERRAL */}
       <div style={{ margin: "16px 16px 32px" }}>
         <button
-          style={{
-            width: "100%", padding: "13px",
-            borderRadius: 12, border: "none",
-            background: "#2563eb", color: "white",
-            fontSize: 14, fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          }}
+          className="primary-action-btn"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, margin: 0 }}
           onClick={() => {
             localStorage.setItem("selectedPatient", JSON.stringify(patient));
             if (activeDraft || activeReferral) { setShowWarning(true); return; }

@@ -285,7 +285,7 @@ function Referrals() {
         <div className="queue-grid">
 
           <div
-            className="queue-card"
+            className="queue-card stat-amber"
             onClick={() =>
               navigate("/sync")
             }
@@ -301,7 +301,7 @@ function Referrals() {
           </div>
 
           <div
-            className="queue-card"
+            className="queue-card stat-blue"
             onClick={() =>
               navigate("/work-queue/pending-review")
             }
@@ -317,7 +317,7 @@ function Referrals() {
           </div>
 
           <div
-            className="queue-card"
+            className="queue-card stat-purple"
             onClick={() =>
               navigate("/work-queue/feedback-received")
             }
@@ -333,7 +333,7 @@ function Referrals() {
           </div>
 
           <div
-            className="queue-card"
+            className="queue-card stat-green"
             onClick={() =>
               navigate("/work-queue/closed")
             }

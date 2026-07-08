@@ -1,6 +1,7 @@
 import QRCode from "react-qr-code";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CheckCircle2, Clock } from "lucide-react";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -82,7 +83,23 @@ function QRView() {
 
       {/* QR CODE */}
       <div className="details-card" style={{ textAlign: "center", padding: 28 }} ref={qrRef}>
-        <QRCode value={qrString} size={260} />
+
+        <div className="qr-success-badge">
+          <CheckCircle2 size={26} />
+        </div>
+
+        <div className="qr-frame">
+          <div className="qr-frame-inner">
+            <QRCode value={qrString} size={240} />
+          </div>
+        </div>
+
+        {qrPayload.synced === false && (
+          <div className="qr-pending-badge">
+            <Clock size={13} />
+            {t("Pending sync — will upload when back online")}
+          </div>
+        )}
 
         <div
           style={{
@@ -129,7 +146,14 @@ function QRView() {
           { label: t("Patient:"), value: qrPayload.patientName },
           ...(qrPayload.patientAge ? [{ label: t("Age:"), value: qrPayload.patientAge }] : []),
           { label: t("Diagnosis:"), value: qrPayload.diagnosis },
-          { label: t("Urgency:"), value: qrPayload.urgency },
+          {
+            label: t("Urgency:"),
+            value: (
+              <span className={`status-chip ${(qrPayload.urgency || "").toLowerCase()}`} style={{ margin: 0 }}>
+                {qrPayload.urgency}
+              </span>
+            ),
+          },
           { label: t("To:"), value: qrPayload.destinationHospital },
           { label: t("Date:"), value: qrPayload.referralDate },
         ].map((row, i, arr) => (
@@ -142,20 +166,9 @@ function QRView() {
 
       {/* RETURN */}
       <button
+        className="secondary-action-btn"
         onClick={() => navigate("/dashboard")}
-        style={{
-          width: "100%",
-          padding: "13px",
-          borderRadius: 12,
-          border: "1px solid #e2e8f0",
-          background: "white",
-          color: "#334155",
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: "pointer",
-          marginTop: 4,
-          marginBottom: 8,
-        }}
+        style={{ marginTop: 4, marginBottom: 8 }}
       >
         {t("Return to Dashboard")}
       </button>

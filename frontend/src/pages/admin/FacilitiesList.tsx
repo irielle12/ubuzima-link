@@ -163,32 +163,14 @@ function FacilitiesList() {
       {/* TABS */}
       <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
         <button
+          className={`admin-tab-btn ${tab === "active" ? "active" : ""}`}
           onClick={() => setTab("active")}
-          style={{
-            padding: "7px 20px",
-            borderRadius: 8,
-            border: "1px solid #e2e8f0",
-            background: tab === "active" ? "#0f172a" : "white",
-            color: tab === "active" ? "white" : "#475569",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-          }}
         >
           Active Facilities
         </button>
         <button
+          className={`admin-tab-btn danger ${tab === "bin" ? "active" : ""}`}
           onClick={() => setTab("bin")}
-          style={{
-            padding: "7px 20px",
-            borderRadius: 8,
-            border: "1px solid #e2e8f0",
-            background: tab === "bin" ? "#dc2626" : "white",
-            color: tab === "bin" ? "white" : "#475569",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-          }}
         >
           🗑 Recycle Bin
         </button>

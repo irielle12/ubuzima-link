@@ -10,6 +10,7 @@ import { markClosedReferralsSeen } from "../services/notifications";
 import {
   House, FileText, Wifi, User,
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
+  Hourglass, MapPinCheck, Archive,
 } from "lucide-react";
 
 function hasFeedback(r: any) {
@@ -100,118 +101,100 @@ function ReferralDetails() {
       </div>
 
       {/* PATIENT INFORMATION */}
-      <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+      <div className="info-card">
+        <p className="info-card-title">
+          <span className="info-card-icon blue"><User size={13} /></span>
           {t("Patient Information")}
         </p>
         {[
           { icon: <User size={14} />, label: t("Full Name"), value: `${referral.first_name} ${referral.last_name}` },
           { icon: <UserCheck size={14} />, label: t("Gender"), value: referral.gender || "—" },
           { icon: <Phone size={14} />, label: t("Phone"), value: referral.phone || "—" },
-        ].map((row, i, arr) => (
-          <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid #f1f5f9" : "none" }}>
-            <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
-            <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+        ].map((row) => (
+          <div key={row.label} className="info-row">
+            <span className="info-row-icon">{row.icon}</span>
+            <span className="info-row-label">{row.label}</span>
+            <span className="info-row-value">{row.value}</span>
           </div>
         ))}
       </div>
 
       {/* CLINICAL INFORMATION */}
-      <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+      <div className="info-card">
+        <p className="info-card-title">
+          <span className="info-card-icon teal"><Stethoscope size={13} /></span>
           {t("Clinical Information")}
         </p>
 
         {referral.chief_complaint && (
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><AlertCircle size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Chief Complaint")}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{referral.chief_complaint}</p>
+          <div className="info-block">
+            <div className="info-block-label"><AlertCircle size={13} />{t("Chief Complaint")}</div>
+            <p className="info-block-value">{referral.chief_complaint}</p>
           </div>
         )}
 
         {referral.medical_history && (
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Medical History")}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{referral.medical_history}</p>
+          <div className="info-block">
+            <div className="info-block-label"><FileText size={13} />{t("Medical History")}</div>
+            <p className="info-block-value">{referral.medical_history}</p>
           </div>
         )}
 
         {(referral.vital_bp || referral.vital_heart_rate || referral.vital_temperature || referral.vital_respiratory_rate) && (
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><Activity size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Vital Signs")}</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+          <div className="info-block">
+            <div className="info-block-label" style={{ marginBottom: 8 }}><Activity size={13} />{t("Vital Signs")}</div>
+            <div className="vitals-mini-grid">
               {referral.vital_bp && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", background: "#f8fafc", borderRadius: 8, border: "1px solid #f1f5f9" }}>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>{t("BP:")}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{referral.vital_bp}</span>
-                </div>
+                <div className="vitals-mini-item"><span>{t("BP:")}</span><span>{referral.vital_bp}</span></div>
               )}
               {referral.vital_heart_rate && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", background: "#f8fafc", borderRadius: 8, border: "1px solid #f1f5f9" }}>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>{t("HR:")}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{referral.vital_heart_rate}</span>
-                </div>
+                <div className="vitals-mini-item"><span>{t("HR:")}</span><span>{referral.vital_heart_rate}</span></div>
               )}
               {referral.vital_temperature && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", background: "#f8fafc", borderRadius: 8, border: "1px solid #f1f5f9" }}>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>{t("Temp:")}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{referral.vital_temperature}</span>
-                </div>
+                <div className="vitals-mini-item"><span>{t("Temp:")}</span><span>{referral.vital_temperature}</span></div>
               )}
               {referral.vital_respiratory_rate && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", background: "#f8fafc", borderRadius: 8, border: "1px solid #f1f5f9" }}>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>{t("RR:")}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{referral.vital_respiratory_rate}</span>
-                </div>
+                <div className="vitals-mini-item"><span>{t("RR:")}</span><span>{referral.vital_respiratory_rate}</span></div>
               )}
             </div>
           </div>
         )}
 
-        <div style={{ padding: "10px 16px", borderBottom: referral.action_taken ? "1px solid #f1f5f9" : "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-            <span style={{ color: "#94a3b8", flexShrink: 0 }}><Stethoscope size={13} /></span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Provisional Diagnosis")}</span>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{referral.diagnosis}</p>
+        <div className="info-block">
+          <div className="info-block-label"><Stethoscope size={13} />{t("Provisional Diagnosis")}</div>
+          <p className="info-block-value">{referral.diagnosis}</p>
         </div>
 
         {referral.action_taken && (
-          <div style={{ padding: "10px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><CheckCircle size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Action Taken")}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{referral.action_taken}</p>
+          <div className="info-block">
+            <div className="info-block-label"><CheckCircle size={13} />{t("Action Taken")}</div>
+            <p className="info-block-value">{referral.action_taken}</p>
           </div>
         )}
       </div>
 
       {/* REFERRAL DETAILS */}
-      <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+      <div className="info-card">
+        <p className="info-card-title">
+          <span className="info-card-icon purple"><Building2 size={13} /></span>
           {t("Referral Details")}
         </p>
+        <div className="info-row">
+          <span className="info-row-icon"><AlertTriangle size={14} /></span>
+          <span className="info-row-label">{t("Priority")}</span>
+          <span className={`status-chip ${(referral.urgency || "").toLowerCase()}`} style={{ margin: 0 }}>
+            {referral.urgency || "—"}
+          </span>
+        </div>
         {[
-          { icon: <AlertTriangle size={14} />, label: t("Priority"), value: referral.urgency || "—" },
           { icon: <Building2 size={14} />, label: t("Receiving Hospital"), value: referral.destination_hospital || "—" },
           { icon: <Activity size={14} />, label: t("Status"), value: referral.workflow_status },
           { icon: <Calendar size={14} />, label: t("Date"), value: referral.created_at ? new Date(referral.created_at).toLocaleDateString() : "—" },
-        ].map((row, i, arr) => (
-          <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid #f1f5f9" : "none" }}>
-            <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
-            <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+        ].map((row) => (
+          <div key={row.label} className="info-row">
+            <span className="info-row-icon">{row.icon}</span>
+            <span className="info-row-label">{row.label}</span>
+            <span className="info-row-value">{row.value}</span>
           </div>
         ))}
       </div>
@@ -230,28 +213,35 @@ function ReferralDetails() {
 
       {/* PENDING REVIEW */}
       {status === "Pending Hospital Review" && (
-        <div className="workflow-message">
-          <h4>{t("Awaiting Hospital Review")}</h4>
-          <p>{t("The referral has been submitted and is awaiting review by the receiving hospital.")}</p>
+        <div className="workflow-message with-icon">
+          <span className="workflow-message-icon"><Hourglass size={16} /></span>
+          <div>
+            <h4>{t("Awaiting Hospital Review")}</h4>
+            <p>{t("The referral has been submitted and is awaiting review by the receiving hospital.")}</p>
+          </div>
         </div>
       )}
 
       {/* ARRIVED */}
       {status === "Arrived" && (
-        <div className="workflow-message">
-          <h4>{t("Patient Has Arrived")}</h4>
-          <p>
-            {referral.first_name} {referral.last_name} arrived at{" "}
-            {referral.destination_hospital || "the receiving hospital"}
-            {referral.arrived_at ? ` on ${new Date(referral.arrived_at).toLocaleString()}` : ""}.
-          </p>
+        <div className="workflow-message with-icon">
+          <span className="workflow-message-icon"><MapPinCheck size={16} /></span>
+          <div>
+            <h4>{t("Patient Has Arrived")}</h4>
+            <p>
+              {referral.first_name} {referral.last_name} arrived at{" "}
+              {referral.destination_hospital || "the receiving hospital"}
+              {referral.arrived_at ? ` on ${new Date(referral.arrived_at).toLocaleString()}` : ""}.
+            </p>
+          </div>
         </div>
       )}
 
       {/* HOSPITAL FEEDBACK (Closed with feedback) */}
       {status === "Closed" && hasFeedback(referral) && (
-        <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+        <div className="info-card">
+          <p className="info-card-title">
+            <span className="info-card-icon green"><CheckCircle size={13} /></span>
             {t("Hospital Feedback")}
           </p>
 
@@ -259,29 +249,25 @@ function ReferralDetails() {
             { icon: <Calendar size={14} />, label: t("Date:"), value: referral.feedback_at ? new Date(referral.feedback_at).toLocaleString() : "—" },
             { icon: <CheckCircle size={14} />, label: t("Outcome:"), value: referral.treatment_status || "—" },
           ].map((row) => (
-            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid #f1f5f9" }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
-              <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+            <div key={row.label} className="info-row">
+              <span className="info-row-icon">{row.icon}</span>
+              <span className="info-row-label">{row.label}</span>
+              <span className="info-row-value">{row.value}</span>
             </div>
           ))}
 
-          <div style={{ padding: "10px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Clinical Notes")}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>
-              {referral.hospital_notes || t("No notes available.")}
-            </p>
+          <div className="info-block">
+            <div className="info-block-label"><FileText size={13} />{t("Clinical Notes")}</div>
+            <p className="info-block-value">{referral.hospital_notes || t("No notes available.")}</p>
           </div>
         </div>
       )}
 
       {/* RETURN REFERRAL */}
       {returnReferral && (
-        <div style={{ margin: "0 16px 12px", background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <p style={{ margin: 0, padding: "11px 16px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #f1f5f9" }}>
+        <div className="info-card">
+          <p className="info-card-title">
+            <span className="info-card-icon amber"><AlertTriangle size={13} /></span>
             {t("Return Instructions from Hospital")}
           </p>
 
@@ -291,28 +277,22 @@ function ReferralDetails() {
               ? [{ icon: <Calendar size={14} />, label: t("Next appointment:"), value: returnReferral.next_appointment_date }]
               : []),
           ].map((row) => (
-            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid #f1f5f9" }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}>{row.icon}</span>
-              <span style={{ fontSize: 13, color: "#64748b", flex: 1 }}>{row.label}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", textAlign: "right" }}>{row.value}</span>
+            <div key={row.label} className="info-row">
+              <span className="info-row-icon">{row.icon}</span>
+              <span className="info-row-label">{row.label}</span>
+              <span className="info-row-value">{row.value}</span>
             </div>
           ))}
 
-          <div style={{ padding: "10px 16px", borderBottom: returnReferral.medications_prescribed ? "1px solid #f1f5f9" : "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-              <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Instructions")}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{returnReferral.follow_up_instructions}</p>
+          <div className="info-block">
+            <div className="info-block-label"><FileText size={13} />{t("Instructions")}</div>
+            <p className="info-block-value">{returnReferral.follow_up_instructions}</p>
           </div>
 
           {returnReferral.medications_prescribed && (
-            <div style={{ padding: "10px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                <span style={{ color: "#94a3b8", flexShrink: 0 }}><FileText size={13} /></span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("Medications")}</span>
-              </div>
-              <p style={{ margin: 0, fontSize: 13, color: "#0f172a", lineHeight: 1.5 }}>{returnReferral.medications_prescribed}</p>
+            <div className="info-block">
+              <div className="info-block-label"><FileText size={13} />{t("Medications")}</div>
+              <p className="info-block-value">{returnReferral.medications_prescribed}</p>
             </div>
           )}
         </div>
@@ -320,9 +300,12 @@ function ReferralDetails() {
 
       {/* CLOSED without feedback */}
       {status === "Closed" && !hasFeedback(referral) && (
-        <div className="workflow-message closed">
-          <h4>{t("Referral Closed")}</h4>
-          <p>{t("Treated — no detailed feedback provided.")}</p>
+        <div className="workflow-message closed with-icon">
+          <span className="workflow-message-icon"><Archive size={16} /></span>
+          <div>
+            <h4>{t("Referral Closed")}</h4>
+            <p>{t("Treated — no detailed feedback provided.")}</p>
+          </div>
         </div>
       )}
 

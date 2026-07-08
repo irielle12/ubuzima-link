@@ -6,7 +6,7 @@ import { getUser } from "../services/authApi";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { User, CreditCard, Clock, UserCheck, Phone, MapPin } from "lucide-react";
+import { User, CreditCard, Clock, UserCheck, Phone, MapPin, AlertTriangle } from "lucide-react";
 
 function calcAge(dob: string | undefined): string {
   if (!dob) return "—";
@@ -44,7 +44,7 @@ function NewReferral() {
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [referringFacilityName, setReferringFacilityName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [capacityWarning, setCapacityWarning] = useState<string | null>(null);
+  const [hospitalCapacity, setHospitalCapacity] = useState<{ name: string; capacity_status?: Record<string, string> } | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -88,20 +88,25 @@ function NewReferral() {
     }
   };
 
-  const checkCapacity = async (facilityId: string, currentUrgency: string) => {
-    if (!facilityId) { setCapacityWarning(null); return; }
+  // Fetches once per hospital selection — covers all three urgency levels,
+  // so switching Priority afterward doesn't need another round trip.
+  const loadCapacity = async (facilityId: string) => {
+    if (!facilityId) { setHospitalCapacity(null); return; }
     try {
       const data = await getHospitalCapacity(facilityId);
-      const level = data.capacity_status?.[currentUrgency];
-      if (level === "unavailable") {
-        setCapacityWarning(`${data.name} is NOT accepting ${currentUrgency} referrals. You may still send this referral.`);
-      } else if (level === "limited") {
-        setCapacityWarning(`${data.name} has LIMITED capacity for ${currentUrgency} referrals.`);
-      } else {
-        setCapacityWarning(null);
-      }
-    } catch { setCapacityWarning(null); }
+      setHospitalCapacity(data);
+    } catch {
+      setHospitalCapacity(null);
+    }
   };
+
+  const capacityLevel = hospitalCapacity?.capacity_status?.[urgency];
+  const capacityWarning =
+    capacityLevel === "unavailable"
+      ? `${hospitalCapacity!.name} ${t("is not accepting")} ${t(urgency)} ${t("referrals right now. You may still send this referral.")}`
+      : capacityLevel === "limited"
+      ? `${hospitalCapacity!.name} ${t("has limited capacity for")} ${t(urgency)} ${t("referrals.")}`
+      : null;
 
   const getHospitalName = () =>
     hospitals.find((h) => String(h.id) === String(destinationFacilityId))?.name || "Unknown Hospital";
@@ -286,7 +291,12 @@ function NewReferral() {
 
       {/* ── 1. PATIENT INFORMATION ── */}
       <div className="referral-card" style={{ padding: 0, overflow: "hidden" }}>
-        <p className="referral-card-title" style={{ padding: "12px 16px 8px" }}>{t("Patient Information")}</p>
+        <p className="referral-card-title" style={{ padding: "12px 16px 8px" }}>
+          <span className="patient-info-avatar" style={{ width: 20, height: 20, fontSize: 10 }}>
+            {(patient.first_name?.[0] || "") + (patient.last_name?.[0] || "")}
+          </span>
+          {t("Patient Information")}
+        </p>
 
         {[
           { icon: <User size={14} />, label: t("Full Name"), value: patientName || "—" },
@@ -310,7 +320,10 @@ function NewReferral() {
 
       {/* ── 2. CLINICAL INFORMATION ── */}
       <div className="referral-card">
-        <p className="referral-card-title">{t("Clinical Information")}</p>
+        <p className="referral-card-title">
+          <span className="referral-card-step">2</span>
+          {t("Clinical Information")}
+        </p>
 
         <label>{t("Chief Complaint")} <span style={{ color: "#dc2626" }}>*</span></label>
         <textarea
@@ -331,7 +344,10 @@ function NewReferral() {
 
       {/* ── 3. VITAL SIGNS ── */}
       <div className="referral-card">
-        <p className="referral-card-title">{t("Clinical Findings — Vital Signs")}</p>
+        <p className="referral-card-title">
+          <span className="referral-card-step">3</span>
+          {t("Clinical Findings — Vital Signs")}
+        </p>
 
         <div className="vitals-grid">
           <div>
@@ -355,7 +371,10 @@ function NewReferral() {
 
       {/* ── 4. ASSESSMENT & PLAN ── */}
       <div className="referral-card">
-        <p className="referral-card-title">{t("Assessment & Plan")}</p>
+        <p className="referral-card-title">
+          <span className="referral-card-step">4</span>
+          {t("Assessment & Plan")}
+        </p>
 
         <label>{t("Provisional Diagnosis")} <span style={{ color: "#dc2626" }}>*</span></label>
         <textarea
@@ -375,16 +394,16 @@ function NewReferral() {
       </div>
 
       {/* ── 5. REFERRAL DETAILS ── */}
-      <div className="referral-card">
-        <p className="referral-card-title">{t("Referral Details")}</p>
+      <div className={`referral-card urgency-accent ${urgency.toLowerCase()}`}>
+        <p className="referral-card-title">
+          <span className="referral-card-step">5</span>
+          {t("Referral Details")}
+        </p>
 
         <label>{t("Priority Level")} <span style={{ color: "#dc2626" }}>*</span></label>
         <select
           value={urgency}
-          onChange={(e) => {
-            setUrgency(e.target.value);
-            checkCapacity(destinationFacilityId, e.target.value);
-          }}
+          onChange={(e) => setUrgency(e.target.value)}
         >
           <option value="">{t("Select Priority")}</option>
           <option value="Routine">{t("Routine — non-urgent, can wait")}</option>
@@ -397,7 +416,7 @@ function NewReferral() {
           value={destinationFacilityId}
           onChange={(e) => {
             setDestinationFacilityId(e.target.value);
-            checkCapacity(e.target.value, urgency);
+            loadCapacity(e.target.value);
           }}
         >
           <option value="">{t("Select Hospital")}</option>
@@ -406,8 +425,31 @@ function NewReferral() {
           ))}
         </select>
 
+        {hospitalCapacity?.capacity_status && (
+          <div className="capacity-summary">
+            <p className="capacity-summary-label">
+              {t("Current capacity at")} {hospitalCapacity.name}
+            </p>
+            <div className="capacity-summary-row">
+              {(["Emergency", "Urgent", "Routine"] as const).map((u) => (
+                <span
+                  key={u}
+                  className={`capacity-summary-chip ${hospitalCapacity.capacity_status?.[u] || "available"}`}
+                >
+                  {t(u)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {capacityWarning && (
-          <div className="referral-capacity-warning">⚠️ {capacityWarning}</div>
+          <div className={`referral-capacity-warning ${capacityLevel}`}>
+            <span className="referral-capacity-warning-icon">
+              <AlertTriangle size={16} />
+            </span>
+            <p>{capacityWarning}</p>
+          </div>
         )}
 
         <div className="auto-filled-panel">

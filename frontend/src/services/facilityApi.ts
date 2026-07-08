@@ -24,7 +24,7 @@ export async function getHospitals() {
 
 export async function getHospitalCapacity(facilityId: number | string) {
   const response = await fetch(
-    `http://localhost:5000/api/facilities/${facilityId}/capacity`
+    `${API_URL}/facilities/${facilityId}/capacity`
   );
 
   const data = await response.json();
@@ -41,7 +41,7 @@ export async function updateHospitalCapacity(
   const { authHeader } = await import("./authApi");
 
   const response = await fetch(
-    `http://localhost:5000/api/facilities/${facilityId}/capacity`,
+    `${API_URL}/facilities/${facilityId}/capacity`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeader() },

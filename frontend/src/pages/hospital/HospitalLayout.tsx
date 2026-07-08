@@ -6,11 +6,13 @@ import {
   LogOut,
   QrCode,
   CheckCircle2,
+  Gauge,
 } from "lucide-react";
 import { getUser, logout } from "../../services/authApi";
 import { getHospitalQueue } from "../../services/referralApi";
 import { getFacilityById } from "../../services/facilityApi";
 import { useNavigate } from "react-router-dom";
+import BrandMark from "../../components/BrandMark";
 import "../../styles/hospital.css";
 
 function HospitalLayout() {
@@ -21,6 +23,7 @@ function HospitalLayout() {
   const [facilityName, setFacilityName] = useState("Hospital Portal");
   const [queueData, setQueueData] = useState<any[]>([]);
   const [queueLoading, setQueueLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     if (user?.facilityId) {
@@ -31,7 +34,17 @@ function HospitalLayout() {
 
     loadQueue();
     const interval = setInterval(loadQueue, 60_000);
-    return () => clearInterval(interval);
+
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
   }, []);
 
   const loadQueue = async () => {
@@ -64,6 +77,7 @@ function HospitalLayout() {
     "/hospital/closed": "Closed Referrals",
     "/hospital/receive-qr": "Receive QR Referral",
     "/hospital/reports": "My Reports",
+    "/hospital/capacity": "Capacity Settings",
   };
 
   const title = pageTitle[location.pathname] || "Hospital Portal";
@@ -73,7 +87,14 @@ function HospitalLayout() {
       {/* SIDEBAR */}
       <aside className="hospital-sidebar">
         <div className="hospital-sidebar-header">
-          <h2>{facilityName}</h2>
+          <BrandMark size={28} />
+          <div>
+            <h2>{facilityName}</h2>
+            <p>
+              <span className={`hospital-online-dot${isOnline ? "" : " offline"}`} />
+              {isOnline ? "Online" : "Offline"}
+            </p>
+          </div>
         </div>
 
         <nav className="hospital-nav">
@@ -131,17 +152,30 @@ function HospitalLayout() {
               My Reports
             </span>
           </NavLink>
+
+          <NavLink
+            to="/hospital/capacity"
+            className={({ isActive }) =>
+              `hospital-nav-item${isActive ? " active" : ""}`
+            }
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <Gauge size={17} />
+              Capacity Settings
+            </span>
+          </NavLink>
         </nav>
 
         <div className="hospital-sidebar-footer">
-          <p>
-            {user?.firstName} {user?.lastName}
-            <br />
-            <span style={{ fontSize: 11, color: "#64748b" }}>{user?.role}</span>
-          </p>
-          <button className="hospital-logout-btn" onClick={handleLogout}>
+          <div className="avatar-circle" style={{ width: 34, height: 34, fontSize: 13, margin: 0 }}>
+            {`${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`.toUpperCase()}
+          </div>
+          <div className="hospital-sidebar-footer-info">
+            <p>{user?.firstName} {user?.lastName}</p>
+            <span style={{ fontSize: 11, color: "#64748b", textTransform: "capitalize" }}>{user?.role}</span>
+          </div>
+          <button className="hospital-logout-btn" onClick={handleLogout} title="Sign Out">
             <LogOut size={15} />
-            Sign Out
           </button>
         </div>
       </aside>

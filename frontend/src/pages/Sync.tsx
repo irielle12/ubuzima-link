@@ -299,16 +299,12 @@ function Sync() {
 
       {/* EMPTY STATE */}
       {allReferrals.length === 0 && pendingPatientCount === 0 && (
-        <div className="details-card">
-          <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <CheckCircle size={36} color="#16a34a" />
-            <p style={{ marginTop: 12, fontWeight: 600, color: "#0f172a" }}>
-              {t("Nothing waiting to sync")}
-            </p>
-            <p style={{ color: "#64748b", fontSize: 13 }}>
-              {t("Offline referrals will appear here automatically.")}
-            </p>
+        <div className="empty-patient-state">
+          <div className="empty-state-icon" style={{ background: "#f0fdf4", color: "#16a34a" }}>
+            <CheckCircle size={26} />
           </div>
+          <h3>{t("Nothing waiting to sync")}</h3>
+          <p style={{ marginBottom: 0 }}>{t("Offline referrals will appear here automatically.")}</p>
         </div>
       )}
 
@@ -329,21 +325,18 @@ function Sync() {
       {((allReferrals.length > 0 && !allSynced) || pendingPatientCount > 0) && (
         <div style={{ marginBottom: 16 }}>
           <button
+            className="primary-action-btn"
             onClick={triggerSync}
             disabled={!isOnline || globalSyncing}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 6,
+              height: "auto",
               padding: "10px 16px",
-              fontSize: 14,
-              fontWeight: 600,
+              margin: 0,
               borderRadius: 10,
-              border: "none",
               background: !isOnline || globalSyncing ? "#94a3b8" : "#2563eb",
-              color: "white",
-              cursor: !isOnline || globalSyncing ? "not-allowed" : "pointer",
-              width: "100%",
               justifyContent: "center",
             }}
           >
@@ -375,7 +368,7 @@ function Sync() {
           const sc = stateColors[state] || stateColors.pending;
 
           return (
-            <div key={r.id} style={{ background: "white", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <div key={r.id} className="info-card" style={{ margin: 0 }}>
 
               {/* top row: name + state badge */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "1px solid #f1f5f9" }}>

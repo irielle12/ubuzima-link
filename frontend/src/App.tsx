@@ -39,6 +39,7 @@ import HospitalLayout from "./pages/hospital/HospitalLayout";
 import HospitalQueue from "./pages/hospital/HospitalQueue";
 import HospitalReports from "./pages/hospital/HospitalReports";
 import ReceiveQR from "./pages/hospital/ReceiveQR";
+import CapacitySettings from "./pages/hospital/CapacitySettings";
 
 function App() {
   useEffect(() => {
@@ -93,6 +94,7 @@ function App() {
   <Route path="closed" element={<HospitalQueue scope="closed" />} />
   <Route path="receive-qr" element={<ReceiveQR />} />
   <Route path="reports" element={<HospitalReports />} />
+  <Route path="capacity" element={<CapacitySettings />} />
 </Route>
 
 {/* Legacy redirects — keep old routes working */}

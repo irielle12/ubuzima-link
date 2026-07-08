@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
   Search,
+  SearchX,
   ArrowLeft,
   UserPlus,
   User,
@@ -150,22 +151,15 @@ const selectPatient = (patient: any) => {
               }
             >
 
+              <div className="patient-result-icon">
+                <User size={18} />
+              </div>
+
               <div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    alignItems:
-                      "center",
-                  }}
-                >
-                  <User size={18} />
-
-                  <strong>
-                    {patient.first_name} {patient.last_name}
-                  </strong>
-                </div>
+                <strong>
+                  {patient.first_name} {patient.last_name}
+                </strong>
 
                 <p>
                   {patient.gender}
@@ -186,6 +180,10 @@ const selectPatient = (patient: any) => {
           0 && (
           <div className="empty-patient-state">
 
+            <div className="empty-state-icon">
+              <SearchX size={26} />
+            </div>
+
             <h3>{t("No patient found")}</h3>
             <p>{t("Register a new patient record.")}</p>
             <button
@@ -200,6 +198,9 @@ const selectPatient = (patient: any) => {
 
       {!searchTerm && (
         <div className="empty-patient-state">
+          <div className="empty-state-icon">
+            <Search size={26} />
+          </div>
           <h3>{t("Search for a patient")}</h3>
           <p>{t("Enter a name, phone number, or national ID.")}</p>
           <button

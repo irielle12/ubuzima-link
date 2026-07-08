@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const getHospitals = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, district, type
+      `SELECT id, name, district, type, capacity_status
        FROM facilities
        WHERE type = 'DISTRICT_HOSPITAL'
          AND active = true
