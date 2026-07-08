@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createReferral, updateReferralStatus } from "../services/referralApi";
-import { getHospitals, getFacilityById, getHospitalCapacity } from "../services/facilityApi";
+import { getHospitals, getFacilityById } from "../services/facilityApi";
 import { getUser } from "../services/authApi";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -44,7 +44,6 @@ function NewReferral() {
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [referringFacilityName, setReferringFacilityName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [hospitalCapacity, setHospitalCapacity] = useState<{ name: string; capacity_status?: Record<string, string> } | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -88,17 +87,13 @@ function NewReferral() {
     }
   };
 
-  // Fetches once per hospital selection — covers all three urgency levels,
-  // so switching Priority afterward doesn't need another round trip.
-  const loadCapacity = async (facilityId: string) => {
-    if (!facilityId) { setHospitalCapacity(null); return; }
-    try {
-      const data = await getHospitalCapacity(facilityId);
-      setHospitalCapacity(data);
-    } catch {
-      setHospitalCapacity(null);
-    }
-  };
+  // Derived straight from the already-loaded (and offline-cached) hospitals
+  // list, which already carries capacity_status per hospital — no separate
+  // fetch needed, so this works offline exactly as well as the hospital
+  // picker itself does.
+  const hospitalCapacity = hospitals.find(
+    (h) => String(h.id) === String(destinationFacilityId)
+  ) || null;
 
   const capacityLevel = hospitalCapacity?.capacity_status?.[urgency];
   const capacityWarning =
@@ -414,10 +409,7 @@ function NewReferral() {
         <label>{t("Receiving Hospital")} <span style={{ color: "#dc2626" }}>*</span></label>
         <select
           value={destinationFacilityId}
-          onChange={(e) => {
-            setDestinationFacilityId(e.target.value);
-            loadCapacity(e.target.value);
-          }}
+          onChange={(e) => setDestinationFacilityId(e.target.value)}
         >
           <option value="">{t("Select Hospital")}</option>
           {hospitals.map((h) => (
