@@ -241,7 +241,7 @@ function Referrals() {
               <div className="queue-top">
                 <div>
                   <h3>
-                    {r.first_name} {r.last_name}
+                    {r.first_name ? `${r.first_name} ${r.last_name}` : t("Unknown patient")}
                   </h3>
                   <p className="muted">{r.referral_number}</p>
                 </div>

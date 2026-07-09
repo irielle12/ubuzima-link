@@ -462,7 +462,7 @@ const getReferralsBySource = async (req, res) => {
         p.last_name,
         f.name AS destination_hospital
       FROM referrals r
-      JOIN patients p
+      LEFT JOIN patients p
         ON r.patient_id = p.id
       LEFT JOIN facilities f
         ON r.destination_facility_id = f.id

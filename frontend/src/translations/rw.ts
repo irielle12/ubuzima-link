@@ -137,6 +137,8 @@ export const rw: Record<string, string> = {
   "Created offline": "Byakozwe nta internet",
   "This referral will sync automatically when connected. The QR code is valid for hospital use in the meantime.": "Ubu butumwa buzahuza bwonyine niboneka internet. Kode ya QR iracyakora ku bitaro mu gihe cyitiriwe.",
   "📸 Ask the patient to take a photo of this screen before leaving": "📸 Saba umurwayi gufotora iyi paji mbere yo kuva",
+  "Text Reference Number to Patient": "Ohereza Nimero y'inkomoko ku murwayi",
+  "Patient Phone Number": "Nimero ya Telefone y'Umurwayi",
   "Reference Number": "Nimero y'inkomoko",
   "If QR cannot be scanned, hospital staff can use this number to find the referral": "Niba QR idashobora gusomwa, abakozi b'ibitaro barashobora gukoresha iyi nimero",
   "Summary": "Incamake",

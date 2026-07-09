@@ -121,6 +121,21 @@ function Sync() {
     const remainingPatients = await db.patients.toArray();
     setPendingPatientCount(remainingPatients.filter((p) => !p.synced).length);
 
+    // Persist resolved patient IDs onto any pending referrals right away —
+    // patientIdMap only exists for this call. If a referral's own sync fails
+    // below and gets retried later, its patient may already be gone from the
+    // local "unsynced" list by then, so patientIdMap would come back empty
+    // and the referral's stale LOCAL- id would never resolve again, leaving
+    // it permanently orphaned (patient_id null) server-side.
+    if (Object.keys(patientIdMap).length > 0) {
+      const allLocalReferrals = await db.referrals.toArray();
+      for (const ref of allLocalReferrals) {
+        if (patientIdMap[ref.patientId]) {
+          await db.referrals.update(ref.id, { patientId: patientIdMap[ref.patientId] });
+        }
+      }
+    }
+
     const pending = await db.referrals.toArray().then((all) =>
       all.filter((r) => r.workflowStatus === "Pending Sync")
     );
@@ -152,9 +167,23 @@ function Sync() {
         continue;
       }
 
+      const numericPatientId = parseInt(resolvedPatientId, 10);
+      if (Number.isNaN(numericPatientId)) {
+        // Never silently send an unresolved patient reference — that's how
+        // referrals end up created with a null patient_id and vanish from
+        // both the work queue and the patient's profile.
+        anyFailed = true;
+        setCardStates((prev) => ({ ...prev, [r.id]: "error" }));
+        setCardErrors((prev) => ({
+          ...prev,
+          [r.id]: "Could not resolve this referral's patient — try syncing again.",
+        }));
+        continue;
+      }
+
       try {
         const serverReferral = await createReferral({
-          patientId: parseInt(resolvedPatientId, 10),
+          patientId: numericPatientId,
           referralNumber: r.referralNumber,
           sourceFacilityId: user?.facilityId,
           destinationFacilityId: parseInt(r.destinationFacilityId || "0", 10),
