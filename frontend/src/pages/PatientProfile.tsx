@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash, FileClock } from "lucide-react";
+import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash, FileClock, Pencil } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getPatientById, getPatientReferrals } from "../services/patientApi";
 import { db } from "../services/db";
@@ -125,9 +125,16 @@ function PatientProfile() {
         <button className="back-btn-v2" onClick={() => navigate("/patient-search")}>
           <ArrowLeft size={20} />
         </button>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1>{t("Patient Profile")}</h1>
         </div>
+        <button
+          className="back-btn-v2"
+          onClick={() => navigate(`/edit-patient/${id}`)}
+          title={t("Edit Patient")}
+        >
+          <Pencil size={18} />
+        </button>
       </div>
 
       {/* AVATAR + NAME */}

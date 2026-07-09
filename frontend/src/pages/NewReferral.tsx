@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createReferral, updateReferralStatus } from "../services/referralApi";
+import { createReferral, updateReferralStatus, sendSmsNotify } from "../services/referralApi";
 import { getHospitals, getFacilityById } from "../services/facilityApi";
 import { getUser } from "../services/authApi";
 import { db } from "../services/db";
@@ -112,6 +112,14 @@ function NewReferral() {
     ? `${currentUser.firstName} ${currentUser.lastName} (${currentUser.staffId})`
     : "—";
 
+  // Fire-and-forget — the reference number is already on the QR code, so a
+  // failed/slow SMS should never block navigation or the referral itself.
+  const notifyPatientSms = (referralId: number | string, referralNumber: string, hospitalName: string) => {
+    if (!patient.phone) return;
+    const message = `Ubuzima-Link: You have been referred to ${hospitalName}. Your referral reference number is ${referralNumber}. Please keep this number for your visit.`;
+    sendSmsNotify(referralId, patient.phone, message).catch((err) => console.error("SMS notify failed:", err));
+  };
+
   const buildQrPayload = (referralNumber: string, destinationHospital: string, synced: boolean) => ({
     referralNumber, synced,
     patientName, patientAge,
@@ -218,6 +226,8 @@ function NewReferral() {
         patientGender: patient.gender,
         patientPhone: patient.phone,
       });
+
+      notifyPatientSms(referral.id, referral.referral_number, destinationHospital);
 
       navigate(`/referral-details/${referral.id}`, { state: { submitted: true } });
     } catch (err: any) {

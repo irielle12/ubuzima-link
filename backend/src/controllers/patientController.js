@@ -207,11 +207,75 @@ const getPatientById =
     }
   };
 
+const updatePatient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fullName,
+      gender,
+      dateOfBirth,
+      phoneNumber,
+      nationalId,
+      guardianNationalId,
+    } = req.body;
+
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      return res.status(400).json({
+        message: `Date of birth must be a valid date, not in the future, and not more than ${MAX_PATIENT_AGE_YEARS} years ago.`,
+      });
+    }
+
+    if (nationalId) {
+      const existing = await pool.query(
+        `SELECT id FROM patients WHERE national_id = $1 AND id != $2 LIMIT 1`,
+        [nationalId, id]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          message: "Another patient is already registered with this National ID.",
+        });
+      }
+    }
+
+    const nameParts = (fullName || "").trim().split(/\s+/);
+    const firstName = nameParts[0] || fullName;
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    const result = await pool.query(
+      `UPDATE patients
+       SET first_name = $1, last_name = $2, gender = $3, date_of_birth = $4,
+           phone = $5, national_id = $6, guardian_national_id = $7
+       WHERE id = $8
+       RETURNING *`,
+      [
+        firstName,
+        lastName,
+        gender,
+        dateOfBirth,
+        phoneNumber || null,
+        nationalId || null,
+        guardianNationalId || null,
+        id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update patient" });
+  }
+};
+
 module.exports = {
   createPatient,
   getPatients,
   searchPatients,
   getPatientById,
+  updatePatient,
 };
 const getPatientReferrals =
   async (req, res) => {
@@ -252,4 +316,5 @@ const getPatientReferrals =
   searchPatients,
   getPatientById,
   getPatientReferrals,
+  updatePatient,
 };

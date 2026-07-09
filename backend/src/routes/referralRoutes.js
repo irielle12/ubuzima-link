@@ -17,6 +17,7 @@ const {
   updateInternalNotes,
   getHospitalQueue,
   receiveOfflineReferral,
+  updateReferral,
 } = require("../controllers/referralController");
 
 const { verifyToken } = require("../middleware/authMiddleware");
@@ -69,6 +70,12 @@ router.get(
   "/:id",
   verifyToken,
   getReferralById
+);
+
+router.patch(
+  "/:id",
+  verifyToken,
+  updateReferral
 );
 
 router.patch(

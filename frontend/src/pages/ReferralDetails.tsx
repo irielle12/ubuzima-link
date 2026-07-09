@@ -10,8 +10,10 @@ import { markClosedReferralsSeen } from "../services/notifications";
 import {
   House, FileText, Wifi, User,
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
-  Hourglass, MapPinCheck, Archive,
+  Hourglass, MapPinCheck, Archive, Pencil,
 } from "lucide-react";
+
+const EDITABLE_STATUSES = ["Draft", "Pending Hospital Review", "Pending Sync"];
 
 function hasFeedback(r: any) {
   return Boolean(r.treatment_status || r.hospital_notes);
@@ -93,11 +95,20 @@ function ReferralDetails() {
       {/* HEADER */}
       <div className="patient-header">
         <button className="back-btn-v2" onClick={() => navigate(-1)}>←</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1>{t("Referral Details")}</h1>
           <p>{referral.referral_number}</p>
           <ConnectionStatus />
         </div>
+        {EDITABLE_STATUSES.includes(status) && (
+          <button
+            className="back-btn-v2"
+            onClick={() => navigate(`/edit-referral/${id}`)}
+            title={t("Edit Referral")}
+          >
+            <Pencil size={18} />
+          </button>
+        )}
       </div>
 
       {/* PATIENT INFORMATION */}

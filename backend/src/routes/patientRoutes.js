@@ -8,14 +8,23 @@ const {
   getPatients,
   searchPatients,
   getPatientById,
-  getPatientReferrals
+  getPatientReferrals,
+  updatePatient
 } = require(
   "../controllers/patientController"
 );
 
+const { verifyToken } = require("../middleware/authMiddleware");
+
 router.post(
   "/",
   createPatient
+);
+
+router.patch(
+  "/:id",
+  verifyToken,
+  updatePatient
 );
 
 router.get("/", getPatients);

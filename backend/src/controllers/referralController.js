@@ -65,6 +65,20 @@ const createReferral = async (req, res) => {
             [resolvedSourceId, existing.rows[0].id]
           );
         }
+
+        // Same idea for the patient: if the hospital scanned this referral's QR
+        // before the health post's device synced, it couldn't find a real patient
+        // record yet and linked to a placeholder ("QR-...") patient it created on
+        // the spot. Now that the health post is syncing with the real patient ID,
+        // repoint the referral — otherwise it stays attached to the placeholder
+        // forever and never shows up on the real patient's profile.
+        if (patientId && String(existing.rows[0].patient_id) !== String(patientId)) {
+          await pool.query(
+            `UPDATE referrals SET patient_id = $1 WHERE id = $2`,
+            [patientId, existing.rows[0].id]
+          );
+        }
+
         const full = await pool.query(
           `SELECT r.*, p.first_name, p.last_name
            FROM referrals r
@@ -220,6 +234,70 @@ const getReferralById = async (req, res) => {
     res.status(500).json({
       message: "Failed to load referral",
     });
+  }
+};
+
+const updateReferral = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      chiefComplaint,
+      medicalHistory,
+      vitalBp,
+      vitalHeartRate,
+      vitalTemperature,
+      vitalRespiratoryRate,
+      diagnosis,
+      actionTaken,
+      urgency,
+      destinationFacilityId,
+    } = req.body;
+
+    const existing = await pool.query(
+      `SELECT workflow_status FROM referrals WHERE id = $1`,
+      [id]
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ message: "Referral not found" });
+    }
+
+    // Once a hospital has started acting on a referral (patient arrived, or
+    // it's already closed), the clinical details become part of the record —
+    // editing them after the fact would rewrite history the hospital already
+    // relied on. Editing is only safe before that point.
+    if (!["Draft", "Pending Hospital Review"].includes(existing.rows[0].workflow_status)) {
+      return res.status(409).json({
+        message: "This referral can no longer be edited — the hospital has already begun processing it.",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE referrals
+       SET chief_complaint = $1, medical_history = $2,
+           vital_bp = $3, vital_heart_rate = $4, vital_temperature = $5, vital_respiratory_rate = $6,
+           diagnosis = $7, action_taken = $8, urgency = $9, destination_facility_id = $10
+       WHERE id = $11
+       RETURNING *`,
+      [
+        chiefComplaint || null,
+        medicalHistory || null,
+        vitalBp || null,
+        vitalHeartRate || null,
+        vitalTemperature || null,
+        vitalRespiratoryRate || null,
+        diagnosis,
+        actionTaken || null,
+        urgency,
+        destinationFacilityId,
+        id,
+      ]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update referral" });
   }
 };
 
@@ -547,16 +625,20 @@ const notifyReferral = async (req, res) => {
 
     const atApiKey = process.env.AT_API_KEY;
     const atUsername = process.env.AT_USERNAME;
+    const atSenderId = process.env.AT_SENDER_ID;
 
     if (atApiKey && atUsername) {
       const Africastalking = require("africastalking");
       const at = Africastalking({ apiKey: atApiKey, username: atUsername });
       const sms = at.SMS;
 
+      // `from` must be a registered short code / alphanumeric sender ID, not
+      // the account username — omit it entirely to use the account's default
+      // (e.g. the shared sandbox shortcode) unless one has been registered.
       await sms.send({
         to: [phone],
         message,
-        from: atUsername,
+        ...(atSenderId ? { from: atSenderId } : {}),
       });
 
       return res.json({ sent: true, method: "sms" });
@@ -782,4 +864,5 @@ module.exports = {
   updateInternalNotes,
   getHospitalQueue,
   receiveOfflineReferral,
+  updateReferral,
 };

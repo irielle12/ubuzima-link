@@ -12,9 +12,10 @@ import {
   House,
   FileText,
   User,
+  Pencil,
 } from "lucide-react";
 import { db } from "../services/db";
-import { createReferral, updateReferralStatus } from "../services/referralApi";
+import { createReferral, updateReferralStatus, sendSmsNotify } from "../services/referralApi";
 import { createPatient } from "../services/patientApi";
 import { getUser } from "../services/authApi";
 import { recordSyncAttempt } from "../services/syncStatus";
@@ -187,6 +188,15 @@ function Sync() {
           synced: true,
           patientId: resolvedPatientId,
         });
+
+        // This referral was created offline, so the patient couldn't be texted
+        // at creation time — send it now that it has a real server ID.
+        if (r.patientPhone) {
+          const message = `Ubuzima-Link: You have been referred to ${r.hospital}. Your referral reference number is ${serverReferral.referral_number}. Please keep this number for your visit.`;
+          sendSmsNotify(serverReferral.id, r.patientPhone, message).catch((err) =>
+            console.error("SMS notify failed:", err)
+          );
+        }
 
         setCardStates((prev) => ({ ...prev, [r.id]: "synced" }));
       } catch (err: any) {
@@ -412,6 +422,16 @@ function Sync() {
                   <QrCode size={13} />
                   {t("View QR")}
                 </button>
+
+                {state !== "synced" && (
+                  <button
+                    onClick={() => navigate(`/edit-referral/${r.id}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", fontSize: 13, fontWeight: 600, borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: "#334155", cursor: "pointer" }}
+                  >
+                    <Pencil size={13} />
+                    {t("Edit")}
+                  </button>
+                )}
 
                 {state === "error" && (
                   <button

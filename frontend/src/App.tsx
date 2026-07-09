@@ -19,6 +19,8 @@ import Sync from "./pages/Sync";
 import Referrals from "./pages/Referrals";
 import PatientSearch from "./pages/PatientSearch";
 import CreatePatient from "./pages/RegisterPatient";
+import EditPatient from "./pages/EditPatient";
+import EditReferral from "./pages/EditReferral";
 import ReferralDetails from "./pages/ReferralDetails";
 import WorkQueueList from "./pages/WorkQueueList";
 import Profile from "./pages/Profile";
@@ -69,7 +71,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/patient-search" element={<PatientSearch />} />
           <Route path="/patient-profile/:id" element={<PatientProfile />} />
+          <Route path="/edit-patient/:id" element={<EditPatient />} />
           <Route path="/referral-details/:id" element={<ReferralDetails />} />
+          <Route path="/edit-referral/:id" element={<EditReferral />} />
           <Route path="/new-referral" element={<NewReferral />} />
           <Route path="/qr-view" element={<QRView />} />
           <Route path="/referrals" element={<Referrals />} />

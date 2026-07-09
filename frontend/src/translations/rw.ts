@@ -225,4 +225,26 @@ export const rw: Record<string, string> = {
   "Cancel": "Hagarika",
   "Loading referral...": "Gutangira ubutumwa...",
   "Referral not found.": "Ubutumwa ntibubonetse.",
+  "Failed to load referral.": "Gushaka ubutumwa byanze.",
+  "Edit": "Hindura",
+
+  // ── Edit Patient ──
+  "Edit Patient": "Hindura Umurwayi",
+  "Correct this patient's information": "Kosora amakuru y'uyu murwayi",
+  "Saving…": "Kubika...",
+  "Save Changes": "Bika impinduka",
+  "Patient updated successfully.": "Amakuru y'umurwayi yahinduwe neza.",
+  "Failed to update patient.": "Guhindura amakuru y'umurwayi byanze.",
+  "Connect to the internet to save changes to this patient.": "Tangira internet kugirango ubike impinduka z'uyu murwayi.",
+  "Patient not found.": "Umurwayi ntabonetse.",
+  "Failed to load patient.": "Gushaka amakuru y'umurwayi byanze.",
+  "Another patient is already registered with this National ID.": "Undi murwayi asanzwe yanditswe hifashishijwe iyi ndangamuntu.",
+
+  // ── Edit Referral ──
+  "Edit Referral": "Hindura Ubutumwa",
+  "This referral can no longer be edited": "Ubu butumwa ntibushobora guhindurwa ubu",
+  "The hospital has already begun processing it.": "Ibitaro byatangiye kubukoreraho.",
+  "Connect to the internet to save changes to this referral.": "Tangira internet kugirango ubike impinduka z'ubu butumwa.",
+  "Referral updated.": "Ubutumwa bwahinduwe.",
+  "Failed to update referral.": "Guhindura ubutumwa byanze.",
 };

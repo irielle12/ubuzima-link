@@ -124,6 +124,35 @@ export async function updateReferralStatus(
   return data;
 }
 
+export async function updateReferral(
+  id: number | string,
+  referral: any
+) {
+  const response =
+    await fetch(
+      `${API_URL}/referrals/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify(referral),
+      }
+    );
+
+  const data =
+    await safeJson(response);
+
+  if (!response.ok) {
+    throw new Error(
+      data.message
+    );
+  }
+
+  return data;
+}
+
 export async function getHospitalQueue() {
   const response = await fetch(
     `${API_URL}/referrals/hospital-queue`,

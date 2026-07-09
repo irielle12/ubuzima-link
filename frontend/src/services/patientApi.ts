@@ -1,4 +1,5 @@
 import API_URL from "./api";
+import { authHeader } from "./authApi";
 
 export interface PatientDuplicate {
   id: number;
@@ -97,6 +98,35 @@ export async function getPatientById(
     const err: any = new Error(data.message);
     err.status = response.status;
     throw err;
+  }
+
+  return data;
+}
+
+export async function updatePatient(
+  id: number | string,
+  patient: any
+) {
+  const response =
+    await fetch(
+      `${API_URL}/patients/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify(patient),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message
+    );
   }
 
   return data;
