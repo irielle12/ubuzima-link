@@ -12,6 +12,7 @@ const referralEventRoutes = require("./src/routes/referralEventRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const returnReferralRoutes = require("./src/routes/returnReferralRoutes");
+const smsRoutes = require("./src/routes/smsRoutes");
 
 // Render/Vercel terminate TLS in front of this app — trust their
 // X-Forwarded-Proto header so req.secure reflects the real client protocol.
@@ -32,6 +33,8 @@ if (process.env.NODE_ENV === "production") {
 
 app.use(cors());
 app.use(express.json());
+// Africa's Talking posts delivery-report callbacks as form-urlencoded.
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
@@ -40,6 +43,7 @@ app.use("/api/facilities", facilityRoutes);
 app.use("/api/referrals", referralEventRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/referrals", returnReferralRoutes);
+app.use("/api/sms", smsRoutes);
 
 app.get("/", (req, res) => {
   res.json({

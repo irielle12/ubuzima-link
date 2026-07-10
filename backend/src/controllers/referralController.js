@@ -615,6 +615,7 @@ const getReferralByNumber = async (req, res) => {
 
 const notifyReferral = async (req, res) => {
   try {
+    const { id: referralId } = req.params;
     const { phone, message } = req.body;
 
     if (!phone || !message) {
@@ -635,11 +636,24 @@ const notifyReferral = async (req, res) => {
       // `from` must be a registered short code / alphanumeric sender ID, not
       // the account username — omit it entirely to use the account's default
       // (e.g. the shared sandbox shortcode) unless one has been registered.
-      await sms.send({
+      const result = await sms.send({
         to: [phone],
         message,
         ...(atSenderId ? { from: atSenderId } : {}),
       });
+
+      // This confirms AT handed the message to the telco, not that the
+      // patient's phone actually received it — log the message_id so the
+      // delivery-report callback can update the real outcome once it arrives.
+      const recipient = result?.SMSMessageData?.Recipients?.[0];
+      if (recipient?.messageId) {
+        await pool.query(
+          `INSERT INTO sms_log (referral_id, phone, message, message_id, status)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (message_id) DO NOTHING`,
+          [referralId || null, phone, message, recipient.messageId, recipient.status || "Sent"]
+        );
+      }
 
       return res.json({ sent: true, method: "sms" });
     }

@@ -13,20 +13,8 @@ function QRView() {
   const state: any = location.state;
 
   const [qrPayload, setQrPayload] = useState<any>(null);
-  const [smsPhone, setSmsPhone] = useState("");
 
   const qrRef = useRef<HTMLDivElement>(null);
-
-  // Offline referrals never reach the backend, so there's no server-side
-  // Africa's Talking send available yet — fall back to the device's own SMS
-  // radio (works with no data connection) by opening a pre-filled sms: link,
-  // same wording/fallback the backend uses when AT isn't configured. Left
-  // editable since the patient's phone on file may be blank or wrong.
-  const sendSms = () => {
-    if (!smsPhone.trim()) return;
-    const message = `Ubuzima-Link: You have been referred to ${qrPayload.destinationHospital}. Your referral reference number is ${qrPayload.referralNumber}. Please keep this number for your visit.`;
-    window.location.href = "sms:" + smsPhone.trim() + "?body=" + encodeURIComponent(message);
-  };
 
   useEffect(() => {
     if (state?.qrPayload) {
@@ -35,10 +23,6 @@ function QRView() {
       loadFromDexie();
     }
   }, []);
-
-  useEffect(() => {
-    if (qrPayload?.patientPhone) setSmsPhone(qrPayload.patientPhone);
-  }, [qrPayload]);
 
   const loadFromDexie = async () => {
     const referrals = await db.referrals.orderBy("id").reverse().first();
@@ -145,28 +129,25 @@ function QRView() {
           </p>
         </div>
 
-        {qrPayload.synced === false && (
-          <div style={{ marginTop: 14, textAlign: "left" }}>
-            <label style={{ display: "block", fontSize: 11, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, marginBottom: 6 }}>
-              {t("Patient Phone Number")}
-            </label>
-            <input
-              type="tel"
-              value={smsPhone}
-              onChange={(e) => setSmsPhone(e.target.value)}
-              placeholder="+250781234567"
-              style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, marginBottom: 10, boxSizing: "border-box" }}
-            />
-            <button
-              type="button"
-              className="secondary-action-btn"
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%" }}
-              onClick={sendSms}
-              disabled={!smsPhone.trim()}
-            >
-              <MessageSquare size={15} />
-              {t("Text Reference Number to Patient")}
-            </button>
+        {qrPayload.synced === false && qrPayload.patientPhone && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: "10px 14px",
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: 8,
+              fontSize: 13,
+              color: "#15803d",
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              textAlign: "left",
+            }}
+          >
+            <MessageSquare size={15} style={{ flexShrink: 0 }} />
+            {t("Patient will be texted their reference number automatically once this device is back online")}
           </div>
         )}
       </div>
