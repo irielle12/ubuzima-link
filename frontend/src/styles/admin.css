@@ -346,6 +346,67 @@
   color: #64748b;
 }
 
+/* IMPACT DASHBOARD */
+.admin-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.admin-stat-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.admin-stat-tile-value {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-tile-label {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.admin-chart-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 20px 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  margin-bottom: 20px;
+}
+
+.admin-chart-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
 /* MODAL */
 .admin-modal-overlay {
   position: fixed;

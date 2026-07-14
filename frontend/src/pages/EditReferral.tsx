@@ -7,7 +7,18 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { AlertTriangle } from "lucide-react";
 
-const EDITABLE_STATUSES = ["Draft", "Pending Hospital Review", "Pending Sync"];
+// "Pending Hospital Review" alone isn't enough — that status persists for
+// the entire waiting period, so a referral the hospital already opened
+// (hospital_viewed_at set) must not stay editable even though its status
+// hasn't moved yet.
+function isEditable(referral: any) {
+  const status = referral.workflow_status;
+  return (
+    status === "Draft" ||
+    status === "Pending Sync" ||
+    (status === "Pending Hospital Review" && !referral.hospital_viewed_at)
+  );
+}
 
 function EditReferral() {
   const navigate = useNavigate();
@@ -91,7 +102,7 @@ function EditReferral() {
 
       setPatientName(`${data.first_name || ""} ${data.last_name || ""}`.trim());
 
-      if (!EDITABLE_STATUSES.includes(data.workflow_status)) {
+      if (!isEditable(data)) {
         setNotEditable(true);
         return;
       }

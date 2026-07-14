@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ConnectionStatus from "../components/ConnectionStatus";
-import { getReferralById } from "../services/referralApi";
+import { getReferralById, getSmsStatus } from "../services/referralApi";
 import { getReturnReferral } from "../services/returnReferralApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import { db } from "../services/db";
@@ -10,10 +10,21 @@ import { markClosedReferralsSeen } from "../services/notifications";
 import {
   House, FileText, Wifi, User,
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
-  Hourglass, MapPinCheck, Archive, Pencil,
+  Hourglass, MapPinCheck, Archive, Pencil, MessageSquare,
 } from "lucide-react";
 
-const EDITABLE_STATUSES = ["Draft", "Pending Hospital Review", "Pending Sync"];
+// "Pending Hospital Review" alone isn't enough — that status persists for
+// the entire waiting period, so a referral the hospital already opened
+// (hospital_viewed_at set) must not stay editable even though its status
+// hasn't moved yet.
+function isEditable(referral: any) {
+  const status = referral.workflow_status;
+  return (
+    status === "Draft" ||
+    status === "Pending Sync" ||
+    (status === "Pending Hospital Review" && !referral.hospital_viewed_at)
+  );
+}
 
 function hasFeedback(r: any) {
   return Boolean(r.treatment_status || r.hospital_notes);
@@ -28,11 +39,13 @@ function ReferralDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [returnReferral, setReturnReferral] = useState<any>(null);
+  const [smsStatus, setSmsStatus] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
       loadReferral();
       getReturnReferral(id).then(setReturnReferral).catch(() => {});
+      getSmsStatus(id).then(setSmsStatus).catch(() => {});
     }
   }, [id]);
 
@@ -89,6 +102,12 @@ function ReferralDetails() {
 
   const status = referral.workflow_status;
 
+  // "Submitted" only means AT accepted it for delivery — not confirmed yet.
+  // Only the delivery-report callback can turn this into Success or a real
+  // failure reason, so treat "Submitted" as neither delivered nor failed.
+  const smsDelivered = smsStatus?.sent && smsStatus.status?.toLowerCase() === "success";
+  const smsFailed = smsStatus?.sent && !["success", "submitted"].includes(smsStatus.status?.toLowerCase());
+
   return (
     <div className="patient-search-page">
 
@@ -100,7 +119,7 @@ function ReferralDetails() {
           <p>{referral.referral_number}</p>
           <ConnectionStatus />
         </div>
-        {EDITABLE_STATUSES.includes(status) && (
+        {isEditable(referral) && (
           <button
             className="back-btn-v2"
             onClick={() => navigate(`/edit-referral/${id}`)}
@@ -209,6 +228,26 @@ function ReferralDetails() {
           </div>
         ))}
       </div>
+
+      {/* SMS STATUS */}
+      {smsDelivered && (
+        <div className="workflow-message with-icon success">
+          <span className="workflow-message-icon"><MessageSquare size={16} /></span>
+          <div>
+            <h4>{t("Patient Texted Successfully")}</h4>
+            <p>{t("The patient received their reference number by SMS.")}</p>
+          </div>
+        </div>
+      )}
+      {smsFailed && (
+        <div className="workflow-message with-icon error">
+          <span className="workflow-message-icon"><AlertTriangle size={16} /></span>
+          <div>
+            <h4>{t("SMS Delivery Failed")}</h4>
+            <p>{t("The patient may not have received the reference number by text. Please inform them directly.")}</p>
+          </div>
+        </div>
+      )}
 
       {/* PENDING SYNC */}
       {status === "Pending Sync" && (

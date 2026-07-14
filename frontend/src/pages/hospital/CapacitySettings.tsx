@@ -70,7 +70,9 @@ function CapacitySettings() {
     <div style={{ maxWidth: 680 }}>
       <p style={{ color: "#64748b", fontSize: 14, marginTop: 0, marginBottom: 24 }}>
         Set your current capacity. Health posts will see this before creating a referral.
-        Changes save automatically.
+        Changes save automatically. "Limited" and "Not Accepting" automatically revert to
+        "Available" after 4 hours if left unchanged, so a forgotten setting can't block
+        referrals indefinitely.
       </p>
 
       {error && (

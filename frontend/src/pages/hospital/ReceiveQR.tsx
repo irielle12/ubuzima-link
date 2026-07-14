@@ -9,6 +9,10 @@ type ResultState =
   | { type: "found"; referral: any }
   | { type: "wrong_facility"; intendedHospital: string; referralNumber: string }
   | { type: "unsynced"; payload: any }
+  // A manually-typed reference number that isn't found server-side yet —
+  // unlike a scanned QR, there's no payload to fall back on, so offer a
+  // small manual-entry form instead of a dead-end "not found".
+  | { type: "manual_unsynced"; referralNumber: string }
   | { type: "error"; message: string };
 
 function playBeep() {
@@ -39,6 +43,13 @@ function ReceiveQR() {
   const [showHint, setShowHint] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState("");
+  const [manualForm, setManualForm] = useState({
+    patientName: "",
+    patientPhone: "",
+    diagnosis: "",
+    urgency: "Routine",
+    chiefComplaint: "",
+  });
   const [refInput, setRefInput] = useState("");
 
   const scannerRef = useRef<any>(null);
@@ -181,14 +192,18 @@ function ReceiveQR() {
 
       setResult({ type: "found", referral });
     } catch (err: any) {
-      if (err.message?.includes("not found") && qrPayload) {
+      const notFound = err.message?.includes("not found");
+
+      if (notFound && qrPayload) {
         setResult({ type: "unsynced", payload: qrPayload });
+      } else if (notFound) {
+        // Could be a typo, or (very commonly) a referral the health post
+        // hasn't synced yet — offer manual entry rather than a dead end.
+        setResult({ type: "manual_unsynced", referralNumber });
       } else {
         setResult({
           type: "error",
-          message: err.message?.includes("not found")
-            ? `No referral found with number "${referralNumber}".`
-            : err.message || "Lookup failed. Make sure the server is running.",
+          message: err.message || "Lookup failed. Make sure the server is running.",
         });
       }
     }
@@ -203,6 +218,8 @@ function ReceiveQR() {
   const checkAgain = () => {
     if (result.type === "unsynced") {
       lookup(result.payload.referralNumber, result.payload);
+    } else if (result.type === "manual_unsynced") {
+      lookup(result.referralNumber);
     }
   };
 
@@ -232,12 +249,39 @@ function ReceiveQR() {
     }
   };
 
+  const handleManualAccept = async () => {
+    if (result.type !== "manual_unsynced") return;
+    if (!manualForm.diagnosis.trim()) {
+      setAcceptError("Provisional diagnosis is required.");
+      return;
+    }
+    setAccepting(true);
+    setAcceptError("");
+    try {
+      await receiveOfflineReferral({
+        referralNumber: result.referralNumber,
+        patientName: manualForm.patientName || undefined,
+        patientPhone: manualForm.patientPhone || undefined,
+        chiefComplaint: manualForm.chiefComplaint || undefined,
+        diagnosis: manualForm.diagnosis,
+        urgency: manualForm.urgency,
+      });
+      navigate("/hospital/queue");
+    } catch (err: any) {
+      setAcceptError(err.message || "Failed to register patient.");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   const reset = () => {
     setResult({ type: "idle" });
     setCameraError("");
     setScanFlash(false);
     setShowHint(false);
     setRefInput("");
+    setAcceptError("");
+    setManualForm({ patientName: "", patientPhone: "", diagnosis: "", urgency: "Routine", chiefComplaint: "" });
   };
 
   return (
@@ -582,6 +626,104 @@ function ReceiveQR() {
                   disabled={accepting}
                 >
                   Scan Another
+                </button>
+              </div>
+            </div>
+          )}
+
+          {result.type === "manual_unsynced" && (
+            <div className="hospital-scan-card" style={{ border: "1px solid #fed7aa" }}>
+              <div
+                style={{
+                  padding: "12px 20px",
+                  background: "#fff7ed",
+                  borderBottom: "1px solid #fed7aa",
+                }}
+              >
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#c2410c" }}>
+                  Not found yet — referral "{result.referralNumber}"
+                </p>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#9a3412" }}>
+                  This usually means the health post hasn't come back online to sync it yet. If the
+                  patient is present with this reference number, enter what they can tell you below to
+                  add them to your queue now — the full record will merge automatically once it syncs.
+                </p>
+              </div>
+              <div style={{ padding: 20 }}>
+                <div className="hospital-form-group">
+                  <label className="hospital-form-label">Patient Name</label>
+                  <input
+                    className="hospital-form-input"
+                    value={manualForm.patientName}
+                    onChange={(e) => setManualForm((f) => ({ ...f, patientName: e.target.value }))}
+                  />
+                </div>
+                <div className="hospital-form-group">
+                  <label className="hospital-form-label">Phone</label>
+                  <input
+                    className="hospital-form-input"
+                    value={manualForm.patientPhone}
+                    onChange={(e) => setManualForm((f) => ({ ...f, patientPhone: e.target.value }))}
+                  />
+                </div>
+                <div className="hospital-form-group">
+                  <label className="hospital-form-label">Chief Complaint</label>
+                  <input
+                    className="hospital-form-input"
+                    value={manualForm.chiefComplaint}
+                    onChange={(e) => setManualForm((f) => ({ ...f, chiefComplaint: e.target.value }))}
+                  />
+                </div>
+                <div className="hospital-form-group">
+                  <label className="hospital-form-label">Provisional Diagnosis *</label>
+                  <input
+                    className="hospital-form-input"
+                    value={manualForm.diagnosis}
+                    onChange={(e) => setManualForm((f) => ({ ...f, diagnosis: e.target.value }))}
+                  />
+                </div>
+                <div className="hospital-form-group">
+                  <label className="hospital-form-label">Priority</label>
+                  <select
+                    className="hospital-form-select"
+                    value={manualForm.urgency}
+                    onChange={(e) => setManualForm((f) => ({ ...f, urgency: e.target.value }))}
+                  >
+                    <option value="Emergency">Emergency</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Routine">Routine</option>
+                  </select>
+                </div>
+
+                {acceptError && (
+                  <p style={{ color: "#dc2626", fontSize: 12, margin: "12px 0 0" }}>{acceptError}</p>
+                )}
+
+                <button
+                  className="hospital-action-btn primary"
+                  style={{ marginTop: 16, width: "100%" }}
+                  onClick={handleManualAccept}
+                  disabled={accepting}
+                >
+                  {accepting ? "Registering patient…" : "Register Patient & Open in Queue →"}
+                </button>
+
+                <button
+                  className="hospital-action-btn secondary"
+                  style={{ marginTop: 8, width: "100%" }}
+                  onClick={checkAgain}
+                  disabled={accepting}
+                >
+                  Check Again (if recently synced)
+                </button>
+
+                <button
+                  className="hospital-action-btn secondary"
+                  style={{ marginTop: 8, width: "100%" }}
+                  onClick={reset}
+                  disabled={accepting}
+                >
+                  Search Another
                 </button>
               </div>
             </div>

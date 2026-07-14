@@ -18,6 +18,8 @@ const {
   getHospitalQueue,
   receiveOfflineReferral,
   updateReferral,
+  getSmsStatus,
+  markReferralViewed,
 } = require("../controllers/referralController");
 
 const { verifyToken } = require("../middleware/authMiddleware");
@@ -106,6 +108,18 @@ router.post(
   "/:id/notify",
   verifyToken,
   notifyReferral
+);
+
+router.get(
+  "/:id/sms-status",
+  verifyToken,
+  getSmsStatus
+);
+
+router.patch(
+  "/:id/mark-viewed",
+  verifyToken,
+  markReferralViewed
 );
 
 module.exports = router;

@@ -1655,6 +1655,15 @@
   color: #64748b;
 }
 
+.workflow-message.error {
+  background: #fef2f2;
+}
+
+.workflow-message.error .workflow-message-icon {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
 .status-chip {
   display: inline-block;
   width: fit-content;

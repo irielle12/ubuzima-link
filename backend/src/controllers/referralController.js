@@ -254,7 +254,7 @@ const updateReferral = async (req, res) => {
     } = req.body;
 
     const existing = await pool.query(
-      `SELECT workflow_status FROM referrals WHERE id = $1`,
+      `SELECT workflow_status, hospital_viewed_at FROM referrals WHERE id = $1`,
       [id]
     );
 
@@ -269,6 +269,16 @@ const updateReferral = async (req, res) => {
     if (!["Draft", "Pending Hospital Review"].includes(existing.rows[0].workflow_status)) {
       return res.status(409).json({
         message: "This referral can no longer be edited — the hospital has already begun processing it.",
+      });
+    }
+
+    // workflow_status alone stays "Pending Hospital Review" for the entire
+    // waiting period, so it can't tell us whether a clinician has actually
+    // opened this referral yet — hospital_viewed_at can. Once they've seen
+    // it, editing it afterward would silently change what they already saw.
+    if (existing.rows[0].hospital_viewed_at) {
+      return res.status(409).json({
+        message: "This referral can no longer be edited — the hospital has already reviewed it.",
       });
     }
 
@@ -298,6 +308,30 @@ const updateReferral = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to update referral" });
+  }
+};
+
+// Called when a hospital clinician opens a referral's details in their
+// queue — the first genuine "someone at the hospital has seen this" signal,
+// which the health-post side then uses to lock further edits. Only the
+// first view counts (idempotent), and only a clinician can trigger it.
+const markReferralViewed = async (req, res) => {
+  try {
+    if (req.user?.role !== "clinician") {
+      return res.status(403).json({ message: "Only hospital staff can mark a referral as viewed" });
+    }
+
+    const { id } = req.params;
+
+    await pool.query(
+      `UPDATE referrals SET hospital_viewed_at = NOW() WHERE id = $1 AND hospital_viewed_at IS NULL`,
+      [id]
+    );
+
+    res.sendStatus(204);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to mark referral as viewed" });
   }
 };
 
@@ -642,16 +676,17 @@ const notifyReferral = async (req, res) => {
         ...(atSenderId ? { from: atSenderId } : {}),
       });
 
-      // This confirms AT handed the message to the telco, not that the
-      // patient's phone actually received it — log the message_id so the
-      // delivery-report callback can update the real outcome once it arrives.
+      // AT's own "Success" here only means it was handed to the telco, not
+      // that the patient's phone received it — deliberately NOT stored as
+      // "Success" (that word is reserved for what the delivery-report
+      // callback confirms) so the UI can't mistake submission for delivery.
       const recipient = result?.SMSMessageData?.Recipients?.[0];
       if (recipient?.messageId) {
         await pool.query(
           `INSERT INTO sms_log (referral_id, phone, message, message_id, status)
-           VALUES ($1, $2, $3, $4, $5)
+           VALUES ($1, $2, $3, $4, 'Submitted')
            ON CONFLICT (message_id) DO NOTHING`,
-          [referralId || null, phone, message, recipient.messageId, recipient.status || "Sent"]
+          [referralId || null, phone, message, recipient.messageId]
         );
       }
 
@@ -669,6 +704,32 @@ const notifyReferral = async (req, res) => {
     console.error(error);
     res.status(500).json({
       message: "Failed to send notification",
+    });
+  }
+};
+
+const getSmsStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT status, failure_reason, is_retry, created_at, updated_at
+       FROM sms_log
+       WHERE referral_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ sent: false });
+    }
+
+    res.json({ sent: true, ...result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to load SMS status",
     });
   }
 };
@@ -746,7 +807,7 @@ const getHospitalQueue = async (req, res) => {
          sf.name AS source_facility_name,
          df.name AS destination_hospital
        FROM referrals r
-       JOIN patients p ON r.patient_id = p.id
+       LEFT JOIN patients p ON r.patient_id = p.id
        LEFT JOIN facilities sf ON r.source_facility_id = sf.id
        LEFT JOIN facilities df ON r.destination_facility_id = df.id
        WHERE r.destination_facility_id = $1
@@ -879,4 +940,6 @@ module.exports = {
   getHospitalQueue,
   receiveOfflineReferral,
   updateReferral,
+  getSmsStatus,
+  markReferralViewed,
 };

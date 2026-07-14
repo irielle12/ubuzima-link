@@ -13,6 +13,13 @@ async function handle(response: Response) {
   return data;
 }
 
+export async function getImpactStats() {
+  const response = await fetch(`${API_URL}/impact-stats`, {
+    headers: { ...authHeader() },
+  });
+  return handle(response);
+}
+
 export async function getFacilities() {
   const response = await fetch(`${API_URL}/facilities`, {
     headers: { ...authHeader() },

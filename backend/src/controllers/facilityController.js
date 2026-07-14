@@ -1,15 +1,47 @@
 const pool = require("../config/db");
 
+const CAPACITY_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+// A "Limited"/"Not Accepting" setting a clinician forgets to reset would
+// otherwise block referrals indefinitely — auto-expire it back to
+// "available" once it's been unchanged for longer than the grace period.
+// Read-only: this never persists the reset itself (any subsequent save
+// from the hospital's own settings page will naturally overwrite the stale
+// stored value once it does), so every reader just always computes the
+// current truth instead of trusting whatever's sitting in the column.
+function applyCapacityExpiry(capacityStatus, capacityUpdatedAt) {
+  if (!capacityStatus) return capacityStatus;
+
+  const now = Date.now();
+  const result = { ...capacityStatus };
+
+  for (const urgency of ["Emergency", "Urgent", "Routine"]) {
+    if (result[urgency] && result[urgency] !== "available") {
+      const updatedAt = capacityUpdatedAt?.[urgency];
+      const isStale = !updatedAt || now - new Date(updatedAt).getTime() > CAPACITY_EXPIRY_MS;
+      if (isStale) result[urgency] = "available";
+    }
+  }
+
+  return result;
+}
+
 const getHospitals = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, district, type, capacity_status
+      `SELECT id, name, district, type, capacity_status, capacity_updated_at
        FROM facilities
        WHERE type = 'DISTRICT_HOSPITAL'
          AND active = true
        ORDER BY name`
     );
-    res.json(result.rows);
+
+    const hospitals = result.rows.map(({ capacity_updated_at, ...row }) => ({
+      ...row,
+      capacity_status: applyCapacityExpiry(row.capacity_status, capacity_updated_at),
+    }));
+
+    res.json(hospitals);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to load facilities" });
@@ -270,7 +302,7 @@ const getCapacity = async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      `SELECT id, name, capacity_status FROM facilities WHERE id = $1`,
+      `SELECT id, name, capacity_status, capacity_updated_at FROM facilities WHERE id = $1`,
       [id]
     );
 
@@ -278,7 +310,11 @@ const getCapacity = async (req, res) => {
       return res.status(404).json({ message: "Facility not found" });
     }
 
-    res.json(result.rows[0]);
+    const { capacity_updated_at, ...row } = result.rows[0];
+    res.json({
+      ...row,
+      capacity_status: applyCapacityExpiry(row.capacity_status, capacity_updated_at),
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to get capacity" });
@@ -302,9 +338,35 @@ const updateCapacity = async (req, res) => {
       Routine: Routine || "available",
     };
 
+    const current = await pool.query(
+      `SELECT capacity_status, capacity_updated_at FROM facilities WHERE id = $1`,
+      [id]
+    );
+
+    if (current.rows.length === 0) {
+      return res.status(404).json({ message: "Facility not found" });
+    }
+
+    const priorCapacity = current.rows[0].capacity_status || {};
+    const priorUpdatedAt = current.rows[0].capacity_updated_at || {};
+    const nowIso = new Date().toISOString();
+
+    // Only bump an urgency's timestamp when its value actually changed —
+    // the settings page resends all three on every toggle, so keying off
+    // "did this one change" (not "was anything in the request") is what
+    // keeps each urgency's own staleness clock accurate.
+    const capacityUpdatedAt = { ...priorUpdatedAt };
+    for (const urgency of ["Emergency", "Urgent", "Routine"]) {
+      if (capacity[urgency] !== priorCapacity[urgency]) {
+        capacityUpdatedAt[urgency] = nowIso;
+      }
+    }
+
     const result = await pool.query(
-      `UPDATE facilities SET capacity_status = $1 WHERE id = $2 RETURNING id, name, capacity_status`,
-      [JSON.stringify(capacity), id]
+      `UPDATE facilities SET capacity_status = $1, capacity_updated_at = $2
+       WHERE id = $3
+       RETURNING id, name, capacity_status`,
+      [JSON.stringify(capacity), JSON.stringify(capacityUpdatedAt), id]
     );
 
     res.json(result.rows[0]);

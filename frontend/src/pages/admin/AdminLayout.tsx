@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Building2, Users, LogOut } from "lucide-react";
+import { Building2, Users, LogOut, BarChart3 } from "lucide-react";
 import { getUser, logout } from "../../services/authApi";
 import BrandMark from "../../components/BrandMark";
 import "../../styles/admin.css";
@@ -28,6 +28,14 @@ function AdminLayout() {
         </div>
 
         <nav className="admin-nav">
+          <button
+            className={`admin-nav-item ${isActive("/admin/impact") ? "active" : ""}`}
+            onClick={() => navigate("/admin/impact")}
+          >
+            <BarChart3 size={18} />
+            Impact
+          </button>
+
           <button
             className={`admin-nav-item ${isActive("/admin/facilities") ? "active" : ""}`}
             onClick={() => navigate("/admin/facilities")}

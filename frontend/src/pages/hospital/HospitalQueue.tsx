@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import {
   getReferralEvents,
   closeReferral,
+  markReferralViewed,
 } from "../../services/referralApi";
 import {
   createReturnReferral,
@@ -69,6 +70,13 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
     setShowReturnForm(false);
     setCloseNotes("");
     setPanelLoading(true);
+
+    // First genuine "a clinician has seen this" signal — the health post
+    // uses it to lock further edits, since workflow_status alone stays
+    // "Pending Hospital Review" for the whole waiting period.
+    if (r.workflow_status === "Pending Hospital Review") {
+      markReferralViewed(r.id).catch((err) => console.error("Failed to mark referral viewed:", err));
+    }
 
     try {
       const [evts, ret] = await Promise.allSettled([

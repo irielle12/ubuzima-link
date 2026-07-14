@@ -153,6 +153,18 @@ export async function updateReferral(
   return data;
 }
 
+export async function markReferralViewed(id: number | string) {
+  const response = await fetch(`${API_URL}/referrals/${id}/mark-viewed`, {
+    method: "PATCH",
+    headers: { ...authHeader() },
+  });
+
+  if (!response.ok) {
+    const data = await safeJson(response);
+    throw new Error(data.message);
+  }
+}
+
 export async function getHospitalQueue() {
   const response = await fetch(
     `${API_URL}/referrals/hospital-queue`,
@@ -253,6 +265,31 @@ export async function sendSmsNotify(
           ...authHeader(),
         },
         body: JSON.stringify({ phone, message }),
+      }
+    );
+
+  const data =
+    await safeJson(response);
+
+  if (!response.ok) {
+    throw new Error(
+      data.message
+    );
+  }
+
+  return data;
+}
+
+export async function getSmsStatus(
+  id: number | string
+) {
+  const response =
+    await fetch(
+      `${API_URL}/referrals/${id}/sms-status`,
+      {
+        headers: {
+          ...authHeader(),
+        },
       }
     );
 

@@ -31,10 +31,12 @@ import Profile from "./pages/Profile";
 import PatientProfile from "./pages/PatientProfile";
 
 import RequireNurse from "./components/RequireNurse";
+import AutoSync from "./components/AutoSync";
 import RequireAdmin from "./components/RequireAdmin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import FacilitiesList from "./pages/admin/FacilitiesList";
 import UsersList from "./pages/admin/UsersList";
+import ImpactDashboard from "./pages/admin/ImpactDashboard";
 
 import RequireHospital from "./components/RequireHospital";
 import HospitalLayout from "./pages/hospital/HospitalLayout";
@@ -51,6 +53,7 @@ function App() {
   return (
     <LanguageProvider>
     <NotificationProvider>
+    <AutoSync />
     <BrowserRouter>
       <Routes>
 
@@ -120,7 +123,11 @@ function App() {
 >
   <Route
     index
-    element={<Navigate to="facilities" replace />}
+    element={<Navigate to="impact" replace />}
+  />
+  <Route
+    path="impact"
+    element={<ImpactDashboard />}
   />
   <Route
     path="facilities"

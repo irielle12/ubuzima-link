@@ -21,6 +21,7 @@ const {
   deactivateUser,
   restoreUser,
   permanentDeleteUser,
+  getImpactStats,
 } = require("../controllers/adminController");
 
 router.use(verifyToken, requireAdmin);
@@ -85,6 +86,11 @@ router.patch(
 router.delete(
   "/users/:id",
   permanentDeleteUser
+);
+
+router.get(
+  "/impact-stats",
+  getImpactStats
 );
 
 module.exports = router;

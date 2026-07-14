@@ -228,6 +228,68 @@ const permanentDeleteUser = async (req, res) => {
   }
 };
 
+const getImpactStats = async (req, res) => {
+  try {
+    const [totalResult, turnaroundResult, facilitiesResult, timelineResult, leaderboardResult] =
+      await Promise.all([
+        pool.query(`SELECT COUNT(*) AS total FROM referrals`),
+
+        pool.query(`
+          SELECT AVG(EXTRACT(EPOCH FROM (re.created_at - r.created_at))) AS avg_turnaround_seconds
+          FROM referrals r
+          JOIN LATERAL (
+            SELECT created_at
+            FROM referral_events
+            WHERE referral_id = r.id
+              AND event_type = 'Patient Arrived'
+            ORDER BY created_at ASC
+            LIMIT 1
+          ) re ON true
+        `),
+
+        pool.query(`
+          SELECT COUNT(DISTINCT source_facility_id) AS count
+          FROM referrals
+          WHERE source_facility_id IS NOT NULL
+        `),
+
+        pool.query(`
+          SELECT date_trunc('day', created_at) AS day, COUNT(*) AS count
+          FROM referrals
+          WHERE created_at >= NOW() - INTERVAL '30 days'
+          GROUP BY day
+          ORDER BY day ASC
+        `),
+
+        pool.query(`
+          SELECT f.name, COUNT(r.id) AS count
+          FROM referrals r
+          JOIN facilities f ON r.source_facility_id = f.id
+          GROUP BY f.name
+          ORDER BY count DESC
+          LIMIT 8
+        `),
+      ]);
+
+    res.json({
+      totalReferrals: parseInt(totalResult.rows[0].total, 10),
+      avgTurnaroundSeconds: turnaroundResult.rows[0].avg_turnaround_seconds,
+      facilitiesConnected: parseInt(facilitiesResult.rows[0].count, 10),
+      referralsOverTime: timelineResult.rows.map((row) => ({
+        date: row.day,
+        count: parseInt(row.count, 10),
+      })),
+      facilityLeaderboard: leaderboardResult.rows.map((row) => ({
+        name: row.name,
+        count: parseInt(row.count, 10),
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to load impact stats" });
+  }
+};
+
 module.exports = {
   getUsers,
   createUser,
@@ -236,4 +298,5 @@ module.exports = {
   deactivateUser,
   restoreUser,
   permanentDeleteUser,
+  getImpactStats,
 };
