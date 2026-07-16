@@ -42,27 +42,10 @@ export async function createReferral(
       data.message
     );
 
+    error.status = response.status;
     error.existingDraftId = data.existingDraftId;
 
     throw error;
-  }
-
-  return data;
-}
-
-export async function getReferrals() {
-  const response =
-    await fetch(
-      `${API_URL}/referrals`
-    );
-
-  const data =
-    await safeJson(response);
-
-  if (!response.ok) {
-    throw new Error(
-      data.message
-    );
   }
 
   return data;

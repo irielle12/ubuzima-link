@@ -3,6 +3,7 @@ import { createReferral, updateReferralStatus, sendSmsNotify } from "./referralA
 import { createPatient } from "./patientApi";
 import { getUser } from "./authApi";
 import { recordSyncAttempt } from "./syncStatus";
+import { setSyncInProgress } from "./syncState";
 
 export type CardState = "pending" | "syncing" | "synced" | "error";
 
@@ -15,6 +16,10 @@ export interface SyncCallbacks {
 export interface SyncSummary {
   syncedCount: number;
   failedCount: number;
+  /* Referrals that synced fine but whose patient-notification SMS failed —
+     tracked separately from failedCount since the referral itself is not
+     in an error state and doesn't need re-syncing, only the text failed. */
+  smsFailedCount: number;
 }
 
 // Registers any offline-created patients first, so referrals that reference
@@ -69,13 +74,15 @@ let isSyncing = false;
 
 // Syncs all pending offline patients + referrals to the server.
 export async function runSync(callbacks: SyncCallbacks = {}): Promise<SyncSummary> {
-  if (isSyncing) return { syncedCount: 0, failedCount: 0 };
+  if (isSyncing) return { syncedCount: 0, failedCount: 0, smsFailedCount: 0 };
   isSyncing = true;
+  setSyncInProgress(true);
 
   try {
     return await doSync(callbacks);
   } finally {
     isSyncing = false;
+    setSyncInProgress(false);
   }
 }
 
@@ -107,12 +114,13 @@ async function doSync(callbacks: SyncCallbacks): Promise<SyncSummary> {
   if (pending.length === 0) {
     const patientFailed = Object.keys(patientErrors).length > 0;
     recordSyncAttempt(!patientFailed);
-    return { syncedCount: 0, failedCount: patientFailed ? 1 : 0 };
+    return { syncedCount: 0, failedCount: patientFailed ? 1 : 0, smsFailedCount: 0 };
   }
 
   const user = getUser();
   let syncedCount = 0;
   let failedCount = 0;
+  let smsFailedCount = 0;
 
   for (const r of pending) {
     callbacks.onCardState?.(r.id, "syncing");
@@ -176,17 +184,33 @@ async function doSync(callbacks: SyncCallbacks): Promise<SyncSummary> {
         patientId: resolvedPatientId,
       });
 
-      // This referral was created offline, so the patient couldn't be texted
-      // at creation time — send it now that it has a real server ID.
-      if (r.patientPhone) {
-        const message = `Ubuzima-Link: You have been referred to ${r.hospital}. Your referral reference number is ${serverReferral.referral_number}. Please keep this number for your visit.`;
-        sendSmsNotify(serverReferral.id, r.patientPhone, message).catch((err) =>
-          console.error("SMS notify failed:", err)
-        );
-      }
-
       syncedCount++;
       callbacks.onCardState?.(r.id, "synced");
+
+      // This referral was created offline, so the patient couldn't be
+      // texted at creation time — send it now that it has a real server
+      // ID. Awaited (not fire-and-forget) so a failure is actually caught
+      // and counted here, rather than resolving after this function has
+      // already returned with nothing left listening for the result.
+      if (r.patientPhone) {
+        const message = `Ubuzima-Link: You have been referred to ${r.hospital}. Your referral reference number is ${serverReferral.referral_number}. Please keep this number for your visit.`;
+        try {
+          await sendSmsNotify(serverReferral.id, r.patientPhone, message);
+        } catch (smsErr: any) {
+          // The referral itself synced fine — only the notification
+          // failed — so this doesn't count toward failedCount or flip the
+          // card back to an error state. It's surfaced as its own message
+          // instead, so it isn't silently lost the way it used to be
+          // (fire-and-forget, console.error only, nothing visible to the
+          // nurse at all).
+          smsFailedCount++;
+          console.error("SMS notify failed:", smsErr);
+          callbacks.onCardError?.(
+            r.id,
+            `Referral synced, but the SMS to the patient failed: ${smsErr.message || "Unknown error"}`
+          );
+        }
+      }
     } catch (err: any) {
       failedCount++;
       const msg = err.message || "Unknown error";
@@ -196,5 +220,5 @@ async function doSync(callbacks: SyncCallbacks): Promise<SyncSummary> {
   }
 
   recordSyncAttempt(failedCount === 0);
-  return { syncedCount, failedCount };
+  return { syncedCount, failedCount, smsFailedCount };
 }

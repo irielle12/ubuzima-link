@@ -1,4 +1,5 @@
 import API_URL from "./api";
+import { authHeader } from "./authApi";
 
 export async function getReferralEvents(
   id: number | string
@@ -6,7 +7,8 @@ export async function getReferralEvents(
 
   const response =
     await fetch(
-      `${API_URL}/referrals/${id}/events`
+      `${API_URL}/referrals/${id}/events`,
+      { headers: { ...authHeader() } }
     );
 
   const data =
@@ -38,6 +40,7 @@ export async function createReferralEvent(
         headers: {
           "Content-Type":
             "application/json",
+          ...authHeader(),
         },
         body: JSON.stringify({
           eventType,

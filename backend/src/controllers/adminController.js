@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const { hashPassword } = require("../utils/hashPassword");
 const { validatePasswordStrength } = require("../utils/passwordPolicy");
+const { OTP_REQUIRED_ROLES } = require("../utils/otpPolicy");
 
 const ROLE_PREFIX = { nurse: "NURSE", clinician: "CLIN", admin: "ADMIN" };
 
@@ -60,6 +61,17 @@ const createUser = async (req, res) => {
       });
     }
 
+    // Admin/clinician logins can't complete without an email on file to send
+    // their 2FA code to (see authController.js) — enforcing that here means
+    // an account that can never sign in never gets created in the first
+    // place, rather than discovering the dead end at login time with no
+    // self-service way out.
+    if (OTP_REQUIRED_ROLES.includes(role) && !email) {
+      return res.status(400).json({
+        message: `An email address is required for the ${role} role (used for two-factor sign-in).`,
+      });
+    }
+
     const policyError = validatePasswordStrength(password);
     if (policyError) {
       return res.status(400).json({ message: policyError });
@@ -98,6 +110,28 @@ const updateUser = async (req, res) => {
       role,
       facilityId,
     } = req.body;
+
+    // email/role are both optional here (COALESCE below keeps whatever
+    // isn't provided) — so the *effective* post-update value of each can
+    // only be known by checking against the existing row, not the request
+    // body alone. Needed to catch e.g. changing role to admin without also
+    // setting an email, which would otherwise silently create an account
+    // that can never complete its own 2FA login.
+    if (role || email !== undefined) {
+      const existing = await pool.query("SELECT role, email FROM users WHERE id = $1", [id]);
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const effectiveRole = role || existing.rows[0].role;
+      const effectiveEmail = email !== undefined ? email : existing.rows[0].email;
+
+      if (OTP_REQUIRED_ROLES.includes(effectiveRole) && !effectiveEmail) {
+        return res.status(400).json({
+          message: `An email address is required for the ${effectiveRole} role (used for two-factor sign-in).`,
+        });
+      }
+    }
 
     const result = await pool.query(
       `
@@ -204,6 +238,37 @@ const restoreUser = async (req, res) => {
   }
 };
 
+// Force-signs this user out of every device: bumps credentials_version
+// (invalidating every access token already issued, the instant each one
+// next hits verifyToken — including a device that's currently offline and
+// only rejoins later) and clears the refresh token hash (so none of them
+// can silently mint a new one either). Doesn't require the server to know
+// which devices exist.
+const revokeUserSessions = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `UPDATE users
+       SET credentials_version = credentials_version + 1,
+           refresh_token_hash = NULL,
+           refresh_token_expires_at = NULL
+       WHERE id = $1
+       RETURNING id, staff_id, first_name, last_name, email, role, facility_id, active, created_at`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to revoke sessions" });
+  }
+};
+
 const permanentDeleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -298,5 +363,6 @@ module.exports = {
   deactivateUser,
   restoreUser,
   permanentDeleteUser,
+  revokeUserSessions,
   getImpactStats,
 };

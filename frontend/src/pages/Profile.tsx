@@ -9,6 +9,7 @@ import { getFacilityById } from "../services/facilityApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
+import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
 
 const ROLE_LABELS: Record<string, string> = {
   nurse: "Nurse",
@@ -28,6 +29,7 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [useEmailReset, setUseEmailReset] = useState(false);
 
   useEffect(() => {
     const currentUser = getUser();
@@ -45,9 +47,22 @@ function Profile() {
 
   const closePasswordModal = () => {
     setShowPasswordModal(false);
+    setUseEmailReset(false);
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
+  };
+
+  const handleEmailResetDone = (message: string) => {
+    closePasswordModal();
+    // Resetting a password kills every session for that account, including
+    // this one (see resetPasswordWithCode on the backend) — sign out
+    // properly now rather than leaving the user on a session that's
+    // already dead server-side and would otherwise just get yanked away
+    // by surprise on the next authenticated request.
+    logout();
+    success(`${message} Please sign in again.`);
+    navigate("/login");
   };
 
   const handleChangePassword = async () => {
@@ -176,50 +191,82 @@ function Profile() {
       {showPasswordModal && (
         <div className="warning-modal">
           <div className="warning-card" style={{ width: 320 }}>
-            <h3>{t("Reset Password")}</h3>
+            {useEmailReset ? (
+              <>
+                <h3>{t("Reset Password by Email")}</h3>
+                <ForgotPasswordFlow
+                  initialStaffId={user.staffId}
+                  lockStaffId
+                  onDone={handleEmailResetDone}
+                  onCancel={() => setUseEmailReset(false)}
+                />
+              </>
+            ) : (
+              <>
+                <h3>{t("Reset Password")}</h3>
 
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
-              {t("Current Password")}
-            </label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoFocus
-            />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+                  {t("Current Password")}
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoFocus
+                />
 
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
-              {t("New Password")}
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder={t(PASSWORD_HINT)}
-            />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+                  {t("New Password")}
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder={t(PASSWORD_HINT)}
+                />
 
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
-              {t("Confirm New Password")}
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
-            />
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
+                  {t("Confirm New Password")}
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+                />
 
-            <div className="warning-actions">
-              <button
-                className="primary-action-btn"
-                onClick={handleChangePassword}
-                disabled={saving}
-              >
-                {saving ? t("Saving...") : t("Update Password")}
-              </button>
-              <button className="secondary-action-btn" onClick={closePasswordModal} disabled={saving}>
-                {t("Cancel")}
-              </button>
-            </div>
+                <div className="warning-actions">
+                  <button
+                    className="primary-action-btn"
+                    onClick={handleChangePassword}
+                    disabled={saving}
+                  >
+                    {saving ? t("Saving...") : t("Update Password")}
+                  </button>
+                  <button className="secondary-action-btn" onClick={closePasswordModal} disabled={saving}>
+                    {t("Cancel")}
+                  </button>
+                </div>
+
+                {user.email ? (
+                  <p style={{ textAlign: "center", marginTop: 14 }}>
+                    <button
+                      onClick={() => setUseEmailReset(true)}
+                      style={{
+                        background: "none", border: "none", color: "#2563eb",
+                        fontSize: 12, cursor: "pointer", textDecoration: "underline", padding: 0,
+                      }}
+                    >
+                      {t("Forgot your current password? Reset via email instead")}
+                    </button>
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", marginTop: 14 }}>
+                    {t("No email on file — an administrator can reset your password if you forget it.")}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

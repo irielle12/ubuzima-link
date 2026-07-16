@@ -18,12 +18,14 @@ import { db } from "../services/db";
 import { runSync } from "../services/syncEngine";
 import { getUser } from "../services/authApi";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNotification } from "../contexts/NotificationContext";
 
 type CardState = "pending" | "syncing" | "synced" | "error";
 
 function Sync() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { error: notifyError } = useNotification();
 
   const [allReferrals, setAllReferrals] = useState<any[]>([]);
   const [cardStates, setCardStates] = useState<Record<string, CardState>>({});
@@ -71,11 +73,21 @@ function Sync() {
     syncingRef.current = true;
     setGlobalSyncing(true);
 
-    await runSync({
+    const summary = await runSync({
       onCardState: (id, state) => setCardStates((prev) => ({ ...prev, [id]: state })),
       onCardError: (id, message) => setCardErrors((prev) => ({ ...prev, [id]: message })),
       onPendingPatientCount: setPendingPatientCount,
     });
+
+    // Per-card error messages already show which referral's SMS failed —
+    // this is just the same heads-up AutoSync gives for the automatic
+    // on-reconnect sync, so manually pressing "Sync Now" isn't a worse
+    // experience than just waiting for it to happen automatically.
+    if (summary.smsFailedCount > 0) {
+      notifyError(
+        `${summary.smsFailedCount} patient text notification${summary.smsFailedCount === 1 ? "" : "s"} failed to send — see the referral card${summary.smsFailedCount === 1 ? "" : "s"} below for details.`
+      );
+    }
 
     syncingRef.current = false;
     setGlobalSyncing(false);

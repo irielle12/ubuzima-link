@@ -31,7 +31,12 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.use(cors());
+// Restrict to known frontend origin(s) in production via a comma-separated
+// CORS_ORIGIN env var (e.g. "https://app.example.com,https://admin.example.com").
+// Falls back to allowing any origin when unset, so this is a no-op until
+// that env var is configured on the host.
+const corsOrigins = process.env.CORS_ORIGIN?.split(",").map((o) => o.trim()).filter(Boolean);
+app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined));
 app.use(express.json());
 // Africa's Talking posts delivery-report callbacks as form-urlencoded.
 app.use(express.urlencoded({ extended: true }));

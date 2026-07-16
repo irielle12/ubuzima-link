@@ -36,6 +36,11 @@ function AutoSync() {
             `${summary.failedCount} referral${summary.failedCount === 1 ? "" : "s"} failed to sync — check the Sync page.`
           );
         }
+        if (summary.smsFailedCount > 0) {
+          error(
+            `${summary.smsFailedCount} patient text notification${summary.smsFailedCount === 1 ? "" : "s"} failed to send — the referral${summary.smsFailedCount === 1 ? " itself" : "s themselves"} synced fine, check its details page.`
+          );
+        }
       } finally {
         syncingRef.current = false;
       }

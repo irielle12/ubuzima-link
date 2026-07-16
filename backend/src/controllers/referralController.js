@@ -667,20 +667,38 @@ const notifyReferral = async (req, res) => {
       const at = Africastalking({ apiKey: atApiKey, username: atUsername });
       const sms = at.SMS;
 
-      // `from` must be a registered short code / alphanumeric sender ID, not
-      // the account username — omit it entirely to use the account's default
-      // (e.g. the shared sandbox shortcode) unless one has been registered.
-      const result = await sms.send({
-        to: [phone],
-        message,
-        ...(atSenderId ? { from: atSenderId } : {}),
-      });
+      let result;
+      try {
+        // `from` must be a registered short code / alphanumeric sender ID,
+        // not the account username — omit it entirely to use the account's
+        // default (e.g. the shared sandbox shortcode) unless one has been
+        // registered.
+        result = await sms.send({
+          to: [phone],
+          message,
+          ...(atSenderId ? { from: atSenderId } : {}),
+        });
+      } catch (sendError) {
+        // The provider request itself failed (bad credentials, network,
+        // AT outage) — previously this fell through to the generic catch
+        // below with no trace left anywhere, so getSmsStatus had nothing to
+        // report and the referral's SMS status just stayed silently blank
+        // forever, indistinguishable from "never attempted."
+        console.error("Africa's Talking send failed:", sendError);
+        await pool.query(
+          `INSERT INTO sms_log (referral_id, phone, message, status, failure_reason)
+           VALUES ($1, $2, $3, 'Failed', $4)`,
+          [referralId || null, phone, message, sendError.message || "SMS provider request failed"]
+        );
+        return res.status(502).json({ message: "Failed to send notification", sent: false });
+      }
 
       // AT's own "Success" here only means it was handed to the telco, not
       // that the patient's phone received it — deliberately NOT stored as
       // "Success" (that word is reserved for what the delivery-report
       // callback confirms) so the UI can't mistake submission for delivery.
       const recipient = result?.SMSMessageData?.Recipients?.[0];
+
       if (recipient?.messageId) {
         await pool.query(
           `INSERT INTO sms_log (referral_id, phone, message, message_id, status)
@@ -688,9 +706,23 @@ const notifyReferral = async (req, res) => {
            ON CONFLICT (message_id) DO NOTHING`,
           [referralId || null, phone, message, recipient.messageId]
         );
+        return res.json({ sent: true, method: "sms" });
       }
 
-      return res.json({ sent: true, method: "sms" });
+      // No messageId means AT rejected it outright — bad number format,
+      // blacklisted, insufficient account balance, etc. — and nothing was
+      // ever queued for delivery. This used to be reported to the caller
+      // as `{ sent: true }` regardless, and no sms_log row was written
+      // either, so a referral could fail silently with zero visibility:
+      // the endpoint claimed success, and getSmsStatus later found no
+      // record at all to say otherwise.
+      await pool.query(
+        `INSERT INTO sms_log (referral_id, phone, message, status, failure_reason)
+         VALUES ($1, $2, $3, 'Failed', $4)`,
+        [referralId || null, phone, message, recipient?.status || "Rejected by SMS provider"]
+      );
+
+      return res.status(502).json({ message: "The SMS provider rejected this message.", sent: false });
     }
 
     const smsUri =

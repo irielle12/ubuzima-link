@@ -10,6 +10,7 @@ import {
   deleteUser,
   restoreUser,
   permanentDeleteUser,
+  revokeUserSessions,
   getFacilities,
 } from "../../services/adminApi";
 
@@ -27,7 +28,7 @@ function emptyForm() {
 }
 
 function UsersList() {
-  const { error: notifyError, confirm } = useNotification();
+  const { error: notifyError, success: notifySuccess, confirm } = useNotification();
   const [tab, setTab] = useState<"active" | "bin">("active");
   const [users, setUsers] = useState<any[]>([]);
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -111,6 +112,14 @@ function UsersList() {
   const handleSave = async () => {
     if (!editingUser && (!form.firstName || !form.lastName || !form.password)) {
       setFormError("Name and password are required.");
+      return;
+    }
+
+    // Admin/clinician logins require an email on file to send their 2FA
+    // code to — without this check, saving one without an email creates an
+    // account that can never complete its own sign-in.
+    if ((form.role === "admin" || form.role === "clinician") && !form.email) {
+      setFormError(`An email address is required for the ${form.role} role (used for two-factor sign-in).`);
       return;
     }
 
@@ -202,6 +211,20 @@ function UsersList() {
       await load();
     } catch (err: any) {
       notifyError(err.message || "Failed to restore user.");
+    }
+  };
+
+  const handleRevokeSessions = async (user: any) => {
+    const ok = await confirm(
+      `Sign "${user.first_name} ${user.last_name}" out of every device? They'll need to sign in again, including any device currently offline once it reconnects.`,
+      { confirmLabel: "Sign Out All Devices", danger: true }
+    );
+    if (!ok) return;
+    try {
+      await revokeUserSessions(user.id);
+      notifySuccess(`${user.first_name} ${user.last_name} has been signed out of all devices.`);
+    } catch (err: any) {
+      notifyError(err.message || "Failed to revoke sessions.");
     }
   };
 
@@ -354,6 +377,9 @@ function UsersList() {
                           >
                             Reset Password
                           </button>
+                          <button className="admin-btn-secondary" onClick={() => handleRevokeSessions(u)}>
+                            Sign Out All Devices
+                          </button>
                           <button className="admin-btn-danger" onClick={() => handleDelete(u)}>
                             Delete
                           </button>
@@ -491,7 +517,12 @@ function UsersList() {
             </div>
 
             <div className="admin-form-group">
-              <label>Email</label>
+              <label>
+                Email
+                {(form.role === "admin" || form.role === "clinician") && (
+                  <span style={{ color: "#dc2626" }}> * required for two-factor sign-in</span>
+                )}
+              </label>
               <input
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}

@@ -114,10 +114,17 @@ function NewReferral() {
 
   // Fire-and-forget — the reference number is already on the QR code, so a
   // failed/slow SMS should never block navigation or the referral itself.
+  // Still surfaced as a toast on failure, though (not just console.error) —
+  // the nurse already moved on to the next screen by the time this
+  // resolves, but silently swallowing it left them with no way to know the
+  // patient never actually got texted.
   const notifyPatientSms = (referralId: number | string, referralNumber: string, hospitalName: string) => {
     if (!patient.phone) return;
     const message = `Ubuzima-Link: You have been referred to ${hospitalName}. Your referral reference number is ${referralNumber}. Please keep this number for your visit.`;
-    sendSmsNotify(referralId, patient.phone, message).catch((err) => console.error("SMS notify failed:", err));
+    sendSmsNotify(referralId, patient.phone, message).catch((err) => {
+      console.error("SMS notify failed:", err);
+      notifyError(t("The referral was created, but the SMS to the patient failed to send."));
+    });
   };
 
   const buildQrPayload = (referralNumber: string, destinationHospital: string, synced: boolean) => ({
@@ -240,7 +247,11 @@ function NewReferral() {
         return;
       }
 
-      if (err.name === "TypeError" || err.message === "Failed to fetch") {
+      // Treat a dead/expired session the same as a network failure — the
+      // nurse already did the clinical work of filling this form out, and a
+      // 401 here (session expired mid-entry) shouldn't discard it. Queue it
+      // like any other offline draft; it'll sync once they sign in again.
+      if (err.name === "TypeError" || err.message === "Failed to fetch" || err.status === 401) {
         const localRecord = {
           id: "LOCAL-" + Date.now(),
           patientId: String(patient.id),

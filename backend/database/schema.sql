@@ -39,7 +39,12 @@ CREATE TABLE users (
   locked_until             TIMESTAMP,               -- set on lockout, auto-clears once past
   must_change_password     BOOLEAN NOT NULL DEFAULT false,
   refresh_token_hash       TEXT,                     -- sha256 of the current refresh token (never store it raw)
-  refresh_token_expires_at TIMESTAMP
+  refresh_token_expires_at TIMESTAMP,
+  credentials_version      INTEGER NOT NULL DEFAULT 0, -- bumped to force-sign-out every device (see migrations/007)
+  otp_code_hash            TEXT,                     -- sha256 of the current pending email 2FA code (see migrations/009)
+  otp_code_expires_at      TIMESTAMP,
+  reset_code_hash          TEXT,                     -- sha256 of the current pending password-reset code (see migrations/010)
+  reset_code_expires_at    TIMESTAMP
 );
 
 -- Back-fill the self-referencing FK on facilities now that users exists

@@ -123,7 +123,10 @@ function CreatePatient() {
         return;
       }
 
-      if (err.name === "TypeError" || err.message === "Failed to fetch") {
+      // Same reasoning as NewReferral: a session dying mid-submission (401)
+      // shouldn't throw away a patient the nurse already entered — queue it
+      // like a normal offline draft instead.
+      if (err.name === "TypeError" || err.message === "Failed to fetch" || err.status === 401) {
         const localPatient = buildLocalPatient();
         await db.patients.put(localPatient);
         localStorage.setItem("selectedPatient", JSON.stringify(localPatient));

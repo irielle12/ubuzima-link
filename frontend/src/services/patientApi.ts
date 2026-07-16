@@ -22,6 +22,7 @@ export async function createPatient(
         headers: {
           "Content-Type":
             "application/json",
+          ...authHeader(),
         },
         body: JSON.stringify(
           patient
@@ -34,6 +35,7 @@ export async function createPatient(
 
   if (!response.ok) {
     const err: any = new Error(data.message);
+    err.status = response.status;
     if (response.status === 409 && data.existingPatient) {
       err.existingPatient = data.existingPatient;
     }
@@ -46,7 +48,8 @@ export async function createPatient(
 export async function getPatients() {
   const response =
     await fetch(
-      `${API_URL}/patients`
+      `${API_URL}/patients`,
+      { headers: { ...authHeader() } }
     );
 
   const data =
@@ -68,7 +71,8 @@ export async function searchPatients(
     await fetch(
       `${API_URL}/patients/search?q=${encodeURIComponent(
         search
-      )}`
+      )}`,
+      { headers: { ...authHeader() } }
     );
 
   const data =
@@ -88,7 +92,8 @@ export async function getPatientById(
 ) {
   const response =
     await fetch(
-      `${API_URL}/patients/${id}`
+      `${API_URL}/patients/${id}`,
+      { headers: { ...authHeader() } }
     );
 
   const data =
@@ -137,7 +142,8 @@ export async function getPatientReferrals(
 ) {
   const response =
     await fetch(
-      `${API_URL}/patients/${id}/referrals`
+      `${API_URL}/patients/${id}/referrals`,
+      { headers: { ...authHeader() } }
     );
 
   const data =

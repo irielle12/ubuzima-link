@@ -164,3 +164,12 @@ export async function permanentDeleteUser(id: number | string) {
   });
   return handle(response);
 }
+
+export async function revokeUserSessions(id: number | string) {
+  const response = await fetch(`${API_URL}/users/${id}/revoke-sessions`, {
+    method: "PATCH",
+    headers: { ...authHeader() },
+  });
+  return handle(response);
+}
+

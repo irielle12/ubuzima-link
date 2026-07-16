@@ -18,6 +18,7 @@ const { verifyToken } = require("../middleware/authMiddleware");
 
 router.post(
   "/",
+  verifyToken,
   createPatient
 );
 
@@ -27,20 +28,23 @@ router.patch(
   updatePatient
 );
 
-router.get("/", getPatients);
+router.get("/", verifyToken, getPatients);
 
 router.get(
   "/search",
+  verifyToken,
   searchPatients
 );
 
 router.get(
   "/:id/referrals",
+  verifyToken,
   getPatientReferrals
 );
 
 router.get(
   "/:id",
+  verifyToken,
   getPatientById
 );
 

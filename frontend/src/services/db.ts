@@ -52,6 +52,11 @@ export interface CachedCredential {
   token: string;
   refreshToken?: string;
   cachedAt: string;
+  /* Mirrors the server's login lockout (see authController.js) so a lost
+     device can't be used for unlimited offline password guessing against
+     the cached hash. */
+  failedAttempts?: number;
+  lockedUntil?: string;
 }
 
 export interface Referral {

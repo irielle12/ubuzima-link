@@ -6,6 +6,8 @@ import {
 import { Stethoscope, ShieldCheck } from "lucide-react";
 import { login as loginRequest, getUser } from "../services/authApi";
 import BrandMark from "../components/BrandMark";
+import OtpChallenge from "../components/OtpChallenge";
+import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
 import "../styles/hospital.css";
 
 function Login() {
@@ -19,6 +21,12 @@ function Login() {
   const [error, setError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [otpChallenge, setOtpChallenge] = useState<{
+    preAuthToken: string;
+    maskedEmail?: string;
+  } | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -49,21 +57,37 @@ function Login() {
       setLoggingIn(true);
       setError("");
 
-      await loginRequest(workerId, password);
+      const data = await loginRequest(workerId, password);
 
-      const loggedInUser = getUser();
-
-      if (loggedInUser?.mustChangePassword) {
-        navigate("/force-password-change");
-      } else if (loggedInUser?.role === "admin") {
-        navigate("/admin/facilities");
-      } else {
-        navigate("/dashboard");
+      if (data?.otpRequired) {
+        setOtpChallenge({
+          preAuthToken: data.preAuthToken,
+          maskedEmail: data.maskedEmail,
+        });
+        return;
       }
+
+      navigateAfterLogin(getUser());
     } catch (err: any) {
       setError(err.message || "Invalid Staff ID or password.");
     } finally {
       setLoggingIn(false);
+    }
+  };
+
+  const handlePasswordResetDone = (message: string) => {
+    setShowForgotPassword(false);
+    setInfoMessage(message);
+    setPassword("");
+  };
+
+  const navigateAfterLogin = (loggedInUser: any) => {
+    if (loggedInUser?.mustChangePassword) {
+      navigate("/force-password-change");
+    } else if (loggedInUser?.role === "admin") {
+      navigate("/admin/facilities");
+    } else {
+      navigate("/dashboard");
     }
   };
 
@@ -88,66 +112,110 @@ function Login() {
           <span>{getTitle()}</span>
         </div>
 
-        <label>Staff ID</label>
-        <input
-          type="text"
-          autoComplete="off"
-          placeholder="Enter your staff ID"
-          value={workerId}
-          onChange={(e) => setWorkerId(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-        />
+        {otpChallenge ? (
+          <OtpChallenge
+            preAuthToken={otpChallenge.preAuthToken}
+            maskedEmail={otpChallenge.maskedEmail}
+            staffId={workerId}
+            password={password}
+            onVerified={navigateAfterLogin}
+            onBack={() => setOtpChallenge(null)}
+          />
+        ) : showForgotPassword ? (
+          <ForgotPasswordFlow
+            initialStaffId={workerId}
+            onDone={handlePasswordResetDone}
+            onCancel={() => setShowForgotPassword(false)}
+          />
+        ) : (
+          <>
+            <label>Staff ID</label>
+            <input
+              type="text"
+              autoComplete="off"
+              placeholder="Enter your staff ID"
+              value={workerId}
+              onChange={(e) => setWorkerId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            />
 
-        <label>Password</label>
-        <input
-          type="password"
-          placeholder="Enter your password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-        />
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            />
 
-        {!isOnline && !error && (
-          <p style={{ color: "#b45309", fontSize: 12, margin: "0 0 10px" }}>
-            You're offline. You can still sign in if you've signed in on this device before.
-          </p>
+            <p style={{ textAlign: "right", margin: "-8px 0 12px" }}>
+              <button
+                onClick={() => { setError(""); setInfoMessage(""); setShowForgotPassword(true); }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563eb",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Forgot password?
+              </button>
+            </p>
+
+            {!isOnline && !error && (
+              <p style={{ color: "#b45309", fontSize: 12, margin: "0 0 10px" }}>
+                You're offline. You can still sign in if you've signed in on this device before.
+              </p>
+            )}
+
+            {infoMessage && !error && (
+              <p style={{ color: "#16a34a", fontSize: 13, margin: "0 0 10px" }}>
+                {infoMessage}
+              </p>
+            )}
+
+            {error && (
+              <p style={{ color: "#dc2626", fontSize: 13, margin: "0 0 10px" }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              className="hospital-login-btn"
+              onClick={handleLogin}
+              disabled={loggingIn}
+            >
+              {loggingIn ? "Signing in..." : "Sign In"}
+            </button>
+
+            <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#94a3b8" }}>
+              Contact your administrator if you need access
+            </p>
+          </>
         )}
 
-        {error && (
-          <p style={{ color: "#dc2626", fontSize: 13, margin: "0 0 10px" }}>
-            {error}
+        {!otpChallenge && !showForgotPassword && (
+          <p style={{ textAlign: "center", marginTop: 12 }}>
+            <button
+              onClick={() => navigate("/")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#64748b",
+                fontSize: 13,
+                cursor: "pointer",
+                textDecoration: "underline",
+                padding: 0,
+              }}
+            >
+              ← Back to home
+            </button>
           </p>
         )}
-
-        <button
-          className="hospital-login-btn"
-          onClick={handleLogin}
-          disabled={loggingIn}
-        >
-          {loggingIn ? "Signing in..." : "Sign In"}
-        </button>
-
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#94a3b8" }}>
-          Contact your administrator if you need access
-        </p>
-
-        <p style={{ textAlign: "center", marginTop: 12 }}>
-          <button
-            onClick={() => navigate("/")}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#64748b",
-              fontSize: 13,
-              cursor: "pointer",
-              textDecoration: "underline",
-              padding: 0,
-            }}
-          >
-            ← Back to home
-          </button>
-        </p>
 
       </div>
     </div>

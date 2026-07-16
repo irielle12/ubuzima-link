@@ -21,6 +21,7 @@ const {
   deactivateUser,
   restoreUser,
   permanentDeleteUser,
+  revokeUserSessions,
   getImpactStats,
 } = require("../controllers/adminController");
 
@@ -86,6 +87,11 @@ router.patch(
 router.delete(
   "/users/:id",
   permanentDeleteUser
+);
+
+router.patch(
+  "/users/:id/revoke-sessions",
+  revokeUserSessions
 );
 
 router.get(

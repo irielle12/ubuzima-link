@@ -270,13 +270,6 @@ const updatePatient = async (req, res) => {
   }
 };
 
-module.exports = {
-  createPatient,
-  getPatients,
-  searchPatients,
-  getPatientById,
-  updatePatient,
-};
 const getPatientReferrals =
   async (req, res) => {
     try {

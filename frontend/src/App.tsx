@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import { initSessionRefresh } from "./services/authApi";
+import { initSessionRefresh, installUnauthorizedHandler } from "./services/authApi";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/login";
@@ -47,6 +47,7 @@ import CapacitySettings from "./pages/hospital/CapacitySettings";
 
 function App() {
   useEffect(() => {
+    installUnauthorizedHandler();
     initSessionRefresh();
   }, []);
 
