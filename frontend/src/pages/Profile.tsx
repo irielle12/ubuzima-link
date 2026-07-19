@@ -10,6 +10,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
 import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
+import { db } from "../services/db";
 
 const ROLE_LABELS: Record<string, string> = {
   nurse: "Nurse",
@@ -41,9 +42,34 @@ function Profile() {
   }, [navigate]);
 
   const { t } = useLanguage();
-  const { success, error: notifyError } = useNotification();
+  const { success, error: notifyError, confirm } = useNotification();
 
-  const handleLogout = () => { logout(); navigate("/"); };
+  const handleLogout = async () => {
+    // Data queued here only exists in this device's local storage until it
+    // syncs — logging out (often the first step before switching to a new
+    // device) is the exact moment a nurse could unknowingly strand it. This
+    // can't be recovered after the fact (see ForgotPasswordFlow-adjacent
+    // discussion: a device that never reconnects can't hand off data it
+    // never transmitted), so the only real fix is warning before it happens.
+    const [pendingReferrals, pendingPatients] = await Promise.all([
+      db.referrals.toArray().then((all) => all.filter((r) => r.workflowStatus === "Pending Sync")),
+      db.patients.toArray().then((all) => all.filter((p) => !p.synced)),
+    ]);
+    const pendingCount = pendingReferrals.length + pendingPatients.length;
+
+    if (pendingCount > 0) {
+      const ok = await confirm(
+        t(
+          `${pendingCount} referral${pendingCount === 1 ? "" : "s"}/patient record${pendingCount === 1 ? "" : "s"} on this device ${pendingCount === 1 ? "hasn't" : "haven't"} synced yet. If you switch to a different device before syncing, this data will be lost. Connect to the internet and sync before switching devices.`
+        ),
+        { confirmLabel: t("Sign Out Anyway"), cancelLabel: t("Stay & Sync First"), danger: true }
+      );
+      if (!ok) return;
+    }
+
+    logout();
+    navigate("/");
+  };
 
   const closePasswordModal = () => {
     setShowPasswordModal(false);

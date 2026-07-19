@@ -26,7 +26,15 @@ function CapacitySettings() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user?.facilityId) load();
+    if (user?.facilityId) {
+      load();
+    } else {
+      // Previously left `loading` true forever here — this account has no
+      // facility assigned (capacity is inherently facility-scoped), so
+      // there was nothing to load and nothing to show, but the page never
+      // said so and just spun indefinitely.
+      setLoading(false);
+    }
   }, []);
 
   const load = async () => {
@@ -64,6 +72,15 @@ function CapacitySettings() {
 
   if (loading) {
     return <div className="hospital-empty">Loading capacity settings...</div>;
+  }
+
+  if (!user?.facilityId) {
+    return (
+      <div className="hospital-empty">
+        This account isn't assigned to a facility, so there's no capacity to manage here.
+        Contact an administrator to assign one.
+      </div>
+    );
   }
 
   return (

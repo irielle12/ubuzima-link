@@ -6,6 +6,7 @@ import { getUser } from "../services/authApi";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { buildReferralSmsMessage } from "../utils/smsTemplates";
 import { User, CreditCard, Clock, UserCheck, Phone, MapPin, AlertTriangle } from "lucide-react";
 
 function calcAge(dob: string | undefined): string {
@@ -120,7 +121,7 @@ function NewReferral() {
   // patient never actually got texted.
   const notifyPatientSms = (referralId: number | string, referralNumber: string, hospitalName: string) => {
     if (!patient.phone) return;
-    const message = `Ubuzima-Link: You have been referred to ${hospitalName}. Your referral reference number is ${referralNumber}. Please keep this number for your visit.`;
+    const message = buildReferralSmsMessage(hospitalName, referralNumber);
     sendSmsNotify(referralId, patient.phone, message).catch((err) => {
       console.error("SMS notify failed:", err);
       notifyError(t("The referral was created, but the SMS to the patient failed to send."));

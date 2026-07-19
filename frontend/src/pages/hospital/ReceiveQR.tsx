@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getReferralByNumber, updateReferralStatus, receiveOfflineReferral } from "../../services/referralApi";
 import { getUser } from "../../services/authApi";
+import { decodeQrPayload } from "../../utils/qrPayload";
 
 type ResultState =
   | { type: "idle" }
@@ -11,8 +12,11 @@ type ResultState =
   | { type: "unsynced"; payload: any }
   // A manually-typed reference number that isn't found server-side yet —
   // unlike a scanned QR, there's no payload to fall back on, so offer a
-  // small manual-entry form instead of a dead-end "not found".
-  | { type: "manual_unsynced"; referralNumber: string }
+  // small manual-entry form instead of a dead-end "not found". `reason`
+  // distinguishes "the health post hasn't synced this yet" from "this
+  // hospital device itself has no connection right now" — same fallback
+  // either way, but the explanation shown should blame the right side.
+  | { type: "manual_unsynced"; referralNumber: string; reason: "not_found" | "offline" }
   | { type: "error"; message: string };
 
 function playBeep() {
@@ -142,7 +146,7 @@ function ReceiveQR() {
 
     let payload: any = null;
     try {
-      payload = JSON.parse(text);
+      payload = decodeQrPayload(text);
     } catch {
       setResult({
         type: "error",
@@ -193,13 +197,25 @@ function ReceiveQR() {
       setResult({ type: "found", referral });
     } catch (err: any) {
       const notFound = err.message?.includes("not found");
+      // A fetch failure (this device has no connection right now) throws a
+      // TypeError, not a JSON error response — previously that fell through
+      // to a dead-end generic error instead of the same manual-entry
+      // fallback "not found" already gets, even though the practical need
+      // is identical: can't confirm against the server right now, but the
+      // patient is here, so register them and let it reconcile later.
+      const isOffline = err.name === "TypeError" || err.message === "Failed to fetch" || !navigator.onLine;
 
-      if (notFound && qrPayload) {
+      if ((notFound || isOffline) && qrPayload) {
+        // The QR itself already carries the full payload — no server
+        // round-trip needed to show it, whether it's genuinely not found
+        // yet or this device just can't reach the server right now.
         setResult({ type: "unsynced", payload: qrPayload });
       } else if (notFound) {
         // Could be a typo, or (very commonly) a referral the health post
         // hasn't synced yet — offer manual entry rather than a dead end.
-        setResult({ type: "manual_unsynced", referralNumber });
+        setResult({ type: "manual_unsynced", referralNumber, reason: "not_found" });
+      } else if (isOffline) {
+        setResult({ type: "manual_unsynced", referralNumber, reason: "offline" });
       } else {
         setResult({
           type: "error",
@@ -641,12 +657,14 @@ function ReceiveQR() {
                 }}
               >
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#c2410c" }}>
-                  Not found yet — referral "{result.referralNumber}"
+                  {result.reason === "offline"
+                    ? `No connection right now — referral "${result.referralNumber}"`
+                    : `Not found yet — referral "${result.referralNumber}"`}
                 </p>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "#9a3412" }}>
-                  This usually means the health post hasn't come back online to sync it yet. If the
-                  patient is present with this reference number, enter what they can tell you below to
-                  add them to your queue now — the full record will merge automatically once it syncs.
+                  {result.reason === "offline"
+                    ? "This device can't reach the server right now. If the patient is present with this reference number, enter what they can tell you below to add them to your queue — it'll reconcile with the full record automatically once you're back online."
+                    : "This usually means the health post hasn't come back online to sync it yet. If the patient is present with this reference number, enter what they can tell you below to add them to your queue now — the full record will merge automatically once it syncs."}
                 </p>
               </div>
               <div style={{ padding: 20 }}>

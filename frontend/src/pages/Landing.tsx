@@ -114,10 +114,6 @@ function Landing() {
 
         </div>
 
-        <div className="landing-footer">
-          <span>BSc. Software Engineering Capstone &middot; African Leadership University</span>
-        </div>
-
       </div>
     </div>
   );

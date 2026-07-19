@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle2, MessageSquare } from "lucide-react";
 import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
+import { encodeQrPayload } from "../utils/qrPayload";
 
 function QRView() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ function QRView() {
     setQrPayload(payload);
   };
 
-  const qrString = qrPayload ? JSON.stringify(qrPayload) : "";
+  const qrString = qrPayload ? encodeQrPayload(qrPayload) : "";
 
   if (!qrPayload) {
     return (

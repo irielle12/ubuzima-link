@@ -4,6 +4,7 @@ import { createPatient } from "./patientApi";
 import { getUser } from "./authApi";
 import { recordSyncAttempt } from "./syncStatus";
 import { setSyncInProgress } from "./syncState";
+import { buildReferralSmsMessage } from "../utils/smsTemplates";
 
 export type CardState = "pending" | "syncing" | "synced" | "error";
 
@@ -193,7 +194,7 @@ async function doSync(callbacks: SyncCallbacks): Promise<SyncSummary> {
       // and counted here, rather than resolving after this function has
       // already returned with nothing left listening for the result.
       if (r.patientPhone) {
-        const message = `Ubuzima-Link: You have been referred to ${r.hospital}. Your referral reference number is ${serverReferral.referral_number}. Please keep this number for your visit.`;
+        const message = buildReferralSmsMessage(r.hospital, serverReferral.referral_number);
         try {
           await sendSmsNotify(serverReferral.id, r.patientPhone, message);
         } catch (smsErr: any) {

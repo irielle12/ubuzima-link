@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2 } from "lucide-react";
+import { Building2, ArrowLeft } from "lucide-react";
 import { login as loginRequest, getUser } from "../services/authApi";
 import BrandMark from "../components/BrandMark";
 import OtpChallenge from "../components/OtpChallenge";
@@ -70,7 +70,16 @@ function HospitalLogin() {
       <div className="auth-glow auth-glow-a" />
       <div className="auth-glow auth-glow-b" />
 
-      <div className="hospital-login-card">
+      <div className="hospital-login-card" style={{ position: "relative" }}>
+        <button
+          className="back-btn-v2"
+          onClick={() => navigate("/")}
+          title="Back to home"
+          style={{ position: "absolute", top: 16, left: 16, zIndex: 2 }}
+        >
+          <ArrowLeft size={18} />
+        </button>
+
         <div className="hospital-login-mark">
           <BrandMark size={44} />
         </div>
@@ -164,24 +173,6 @@ function HospitalLogin() {
           </>
         )}
 
-        {!otpChallenge && !showForgotPassword && (
-          <p style={{ textAlign: "center", marginTop: 12 }}>
-            <button
-              onClick={() => navigate("/")}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#64748b",
-                fontSize: 13,
-                cursor: "pointer",
-                textDecoration: "underline",
-                padding: 0,
-              }}
-            >
-              ← Back to home
-            </button>
-          </p>
-        )}
       </div>
     </div>
   );
