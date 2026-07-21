@@ -7,6 +7,7 @@ import ConnectionStatus from "../components/ConnectionStatus";
 import { FileText, RefreshCw } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { markClosedReferralsSeen } from "../services/notifications";
+import Loader from "../components/Loader";
 
 const TITLE_BY_SLUG: Record<string, string> = {
   "pending-review": "Pending Review",
@@ -107,7 +108,9 @@ function WorkQueueList() {
       </div>
 
       {loading && (
-        <div className="details-card">{t("Loading...")}</div>
+        <div className="details-card">
+          <Loader label={t("Loading...")} />
+        </div>
       )}
 
       {error && (

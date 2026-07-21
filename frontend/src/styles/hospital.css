@@ -917,6 +917,7 @@
 
 .hospital-toast.success { background: #166534; }
 .hospital-toast.error { background: #991b1b; }
+.hospital-toast.info { background: #1d4ed8; }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }

@@ -13,6 +13,8 @@ import {
   revokeUserSessions,
   getFacilities,
 } from "../../services/adminApi";
+import Loader from "../../components/Loader";
+import PasswordInput from "../../components/PasswordInput";
 
 const ROLES = ["nurse", "clinician", "admin"];
 
@@ -318,7 +320,7 @@ function UsersList() {
       </div>
 
       <div className="admin-table-card">
-        {loading && <div className="admin-empty-state">Loading users...</div>}
+        {loading && <div className="admin-empty-state"><Loader label="Loading users..." /></div>}
 
         {!loading && error && (
           <div className="admin-empty-state">
@@ -532,8 +534,7 @@ function UsersList() {
             {!editingUser && (
               <div className="admin-form-group">
                 <label>Password</label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder={PASSWORD_HINT}

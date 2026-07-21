@@ -6,6 +6,7 @@ import { db } from "../services/db";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { AlertTriangle } from "lucide-react";
+import Loader from "../components/Loader";
 
 // "Pending Hospital Review" alone isn't enough — that status persists for
 // the entire waiting period, so a referral the hospital already opened
@@ -173,7 +174,11 @@ function EditReferral() {
   };
 
   if (loading) {
-    return <div className="patient-search-page">{t("Loading...")}</div>;
+    return (
+      <div className="patient-search-page">
+        <Loader fullPage label={t("Loading...")} />
+      </div>
+    );
   }
 
   if (notEditable) {

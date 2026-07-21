@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { getUser, isAuthenticated, needsPasswordChange, changePassword } from "../services/authApi";
 import BrandMark from "../components/BrandMark";
+import PasswordInput from "../components/PasswordInput";
 import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
 import "../styles/hospital.css";
 
@@ -93,8 +94,7 @@ function ForcePasswordChange() {
         </p>
 
         <label>Current (Temporary) Password</label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="off"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
@@ -102,8 +102,7 @@ function ForcePasswordChange() {
         />
 
         <label>New Password</label>
-        <input
-          type="password"
+        <PasswordInput
           placeholder={PASSWORD_HINT}
           autoComplete="new-password"
           value={newPassword}
@@ -112,8 +111,7 @@ function ForcePasswordChange() {
         />
 
         <label>Confirm New Password</label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

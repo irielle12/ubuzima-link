@@ -5,11 +5,13 @@ import {
   getReferralEvents,
   closeReferral,
   markReferralViewed,
+  markArrived,
 } from "../../services/referralApi";
 import {
   createReturnReferral,
   getReturnReferral,
 } from "../../services/returnReferralApi";
+import Loader from "../../components/Loader";
 
 /* workflow_status → badge class */
 const STATUS_CLASS: Record<string, string> = {
@@ -18,7 +20,7 @@ const STATUS_CLASS: Record<string, string> = {
   Closed: "closed",
 };
 
-type Toast = { msg: string; type: "success" | "error" } | null;
+type Toast = { msg: string; type: "success" | "error" | "info" } | null;
 
 function calcAge(dob: string | undefined): string {
   if (!dob) return "—";
@@ -60,7 +62,7 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
     followUpUrgency: "Routine",
   });
 
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
+  const showToast = (msg: string, type: "success" | "error" | "info" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
@@ -133,6 +135,21 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
     }
   };
 
+  /* MARK ARRIVED */
+  const doMarkArrived = async () => {
+    if (!selected) return;
+    try {
+      setBusy(true);
+      const r = await markArrived(selected.id);
+      await refreshAndUpdate(r);
+      showToast("Patient marked as arrived", "info");
+    } catch (e: any) {
+      showToast(e.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   /* RETURN REFERRAL */
   const doReturn = async () => {
     if (!selected || !returnData.followUpInstructions.trim()) {
@@ -145,7 +162,7 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
       setReturnReferral(ret);
       await refreshAndUpdate({ workflow_status: "Closed" });
       setShowReturnForm(false);
-      showToast("Return referral issued. Referral closed.");
+      showToast("Return referral issued. Referral closed.", "info");
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
@@ -531,7 +548,7 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
               <div className="hospital-panel-section">
                 <h3>Timeline</h3>
                 {panelLoading ? (
-                  <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>
+                  <Loader size={20} />
                 ) : events.length === 0 ? (
                   <p style={{ color: "#94a3b8", fontSize: 13 }}>No events yet.</p>
                 ) : (
@@ -566,18 +583,57 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
             {/* FOOTER — actions */}
             <div className="hospital-panel-footer">
 
-              {/* PENDING HOSPITAL REVIEW or ARRIVED → feedback + close */}
+              {/* PENDING HOSPITAL REVIEW → mark the patient as physically arrived */}
+              {status === "Pending Hospital Review" && (
+                <>
+                  <button
+                    className="hospital-action-btn primary"
+                    onClick={doMarkArrived}
+                    disabled={busy}
+                    style={{ width: "100%" }}
+                  >
+                    {busy ? "Marking arrived..." : "Mark Patient Arrived"}
+                  </button>
+                  <p
+                    style={{
+                      margin: "6px 0 16px",
+                      fontSize: 12,
+                      color: "#94a3b8",
+                      textAlign: "center",
+                    }}
+                  >
+                    Or close the referral directly below if the patient never showed up.
+                  </p>
+                </>
+              )}
+
+              {/* PENDING HOSPITAL REVIEW or ARRIVED → close with a quick note */}
               {(status === "Pending Hospital Review" || (status === "Arrived" && !showReturnForm && !returnReferral)) && (
                 <>
+                  {status === "Arrived" && (
+                    <p
+                      style={{
+                        margin: "0 0 10px",
+                        fontSize: 12,
+                        color: "#64748b",
+                      }}
+                    >
+                      Use <strong>Close Referral</strong> when the case is done with no further
+                      care needed at the health post. If the patient is going back with
+                      medications, a follow-up date, or care instructions, use{" "}
+                      <strong>Send Back With Follow-up Plan</strong> below instead.
+                    </p>
+                  )}
+
                   <div className="hospital-form-group">
                     <label className="hospital-form-label">
-                      Feedback for health post (optional)
+                      Closing Notes (optional)
                     </label>
                     <textarea
                       className="hospital-form-textarea"
                       value={closeNotes}
                       onChange={(e) => setCloseNotes(e.target.value)}
-                      placeholder="Clinical notes to send back to the referring health post..."
+                      placeholder="A short note for the referring health post — not a structured follow-up plan."
                     />
                   </div>
 
@@ -598,17 +654,36 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
                       textAlign: "center",
                     }}
                   >
-                    Feedback is optional — you can close without filling the form.
+                    Notes are optional — you can close without filling the form.
                   </p>
 
                   {status === "Arrived" && (
-                    <button
-                      className="hospital-action-btn secondary"
-                      onClick={() => setShowReturnForm(true)}
-                      style={{ marginTop: 8 }}
-                    >
-                      Issue Return Referral instead
-                    </button>
+                    <>
+                      <div
+                        style={{
+                          borderTop: "1px solid #e2e8f0",
+                          margin: "16px 0 12px",
+                        }}
+                      />
+                      <button
+                        className="hospital-action-btn primary"
+                        onClick={() => setShowReturnForm(true)}
+                        style={{ width: "100%" }}
+                      >
+                        Send Back With Follow-up Plan
+                      </button>
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          fontSize: 12,
+                          color: "#94a3b8",
+                          textAlign: "center",
+                        }}
+                      >
+                        Captures medications, next appointment date, and instructions the
+                        health post will see.
+                      </p>
+                    </>
                   )}
                 </>
               )}

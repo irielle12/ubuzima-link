@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Phone, User, Calendar, CreditCard, Hash, FileClock, Pe
 import { useLanguage } from "../contexts/LanguageContext";
 import { getPatientById, getPatientReferrals } from "../services/patientApi";
 import { db } from "../services/db";
+import Loader from "../components/Loader";
 
 function PatientProfile() {
   const navigate = useNavigate();
@@ -94,7 +95,13 @@ function PatientProfile() {
     );
   }
 
-  if (!patient) return <div className="patient-search-page">{t("Loading...")}</div>;
+  if (!patient) {
+    return (
+      <div className="patient-search-page">
+        <Loader fullPage label={t("Loading...")} />
+      </div>
+    );
+  }
 
   const activeDraft = referrals.find((r) => r.workflow_status === "Draft");
   const activeReferral = referrals.find(

@@ -5,6 +5,7 @@ import { login as loginRequest, getUser } from "../services/authApi";
 import BrandMark from "../components/BrandMark";
 import OtpChallenge from "../components/OtpChallenge";
 import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
+import PasswordInput from "../components/PasswordInput";
 import "../styles/hospital.css";
 
 function HospitalLogin() {
@@ -122,8 +123,7 @@ function HospitalLogin() {
             />
 
             <label>Password</label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

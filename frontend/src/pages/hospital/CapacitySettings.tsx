@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getUser } from "../../services/authApi";
 import { getHospitalCapacity, updateHospitalCapacity } from "../../services/facilityApi";
+import Loader from "../../components/Loader";
 
 type Level = "available" | "limited" | "unavailable";
 type Capacity = { Emergency: Level; Urgent: Level; Routine: Level };
@@ -71,7 +72,11 @@ function CapacitySettings() {
   };
 
   if (loading) {
-    return <div className="hospital-empty">Loading capacity settings...</div>;
+    return (
+      <div className="hospital-empty">
+        <Loader label="Loading capacity settings..." />
+      </div>
+    );
   }
 
   if (!user?.facilityId) {

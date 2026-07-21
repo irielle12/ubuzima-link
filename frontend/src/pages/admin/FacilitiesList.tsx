@@ -9,6 +9,7 @@ import {
   restoreFacility,
   permanentDeleteFacility,
 } from "../../services/adminApi";
+import Loader from "../../components/Loader";
 
 const FACILITY_TYPES = ["HEALTH_POST", "HEALTH_CENTER", "DISTRICT_HOSPITAL"];
 
@@ -204,7 +205,7 @@ function FacilitiesList() {
       </div>
 
       <div className="admin-table-card">
-        {loading && <div className="admin-empty-state">Loading...</div>}
+        {loading && <div className="admin-empty-state"><Loader /></div>}
 
         {!loading && error && (
           <div className="admin-empty-state">

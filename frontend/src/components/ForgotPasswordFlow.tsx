@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { requestPasswordReset, resetPasswordWithCode } from "../services/authApi";
 import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
+import PasswordInput from "./PasswordInput";
 
 interface ForgotPasswordFlowProps {
   /* Pre-filled Staff ID — e.g. whatever the user already typed on the login
@@ -181,8 +182,7 @@ function ForgotPasswordFlow({
       />
 
       <label style={labelStyle}>New Password</label>
-      <input
-        type="password"
+      <PasswordInput
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
         placeholder={PASSWORD_HINT}
@@ -190,8 +190,7 @@ function ForgotPasswordFlow({
       />
 
       <label style={labelStyle}>Confirm New Password</label>
-      <input
-        type="password"
+      <PasswordInput
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleReset()}

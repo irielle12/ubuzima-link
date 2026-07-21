@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getPendingReferrals } from "../services/referralApi";
 import ConnectionStatus from "../components/ConnectionStatus";
+import Loader from "../components/Loader";
 
 import {
   FileText,
@@ -101,7 +102,9 @@ function QueueReview() {
 
       {/* STATES */}
       {loading && (
-        <div className="details-card">Loading queue...</div>
+        <div className="details-card">
+          <Loader label="Loading queue..." />
+        </div>
       )}
 
       {error && (

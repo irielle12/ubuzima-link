@@ -8,6 +8,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { buildReferralSmsMessage } from "../utils/smsTemplates";
 import { User, CreditCard, Clock, UserCheck, Phone, MapPin, AlertTriangle } from "lucide-react";
+import Loader from "../components/Loader";
 
 function calcAge(dob: string | undefined): string {
   if (!dob) return "—";
@@ -469,7 +470,7 @@ function NewReferral() {
         <div className="auto-filled-panel">
           <div className="detail-row">
             <strong>{t("Referring Facility")}</strong>
-            <span>{referringFacilityName || t("Loading…")}</span>
+            <span>{referringFacilityName || <Loader inline size={14} label={t("Loading…")} />}</span>
           </div>
           <div className="detail-row">
             <strong>{t("Referring Provider")}</strong>

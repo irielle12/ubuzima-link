@@ -5,6 +5,7 @@ import { getPatientById, updatePatient } from "../services/patientApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { db } from "../services/db";
+import Loader from "../components/Loader";
 
 function EditPatient() {
   const navigate = useNavigate();
@@ -178,7 +179,11 @@ function EditPatient() {
   };
 
   if (loading) {
-    return <div className="patient-search-page">{t("Loading...")}</div>;
+    return (
+      <div className="patient-search-page">
+        <Loader fullPage label={t("Loading...")} />
+      </div>
+    );
   }
 
   return (

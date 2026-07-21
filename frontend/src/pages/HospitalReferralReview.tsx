@@ -8,6 +8,7 @@ import {
   rejectReferral,
   submitReferralFeedback,
 } from "../services/referralApi";
+import Loader from "../components/Loader";
 
 function statusChipClass(status: string) {
   if (status === "Pending Hospital Review") return "review";
@@ -122,7 +123,9 @@ function HospitalReferralReview() {
   if (loading) {
     return (
       <div className="patient-search-page">
-        <div className="details-card">Loading referral...</div>
+        <div className="details-card">
+          <Loader label="Loading referral..." />
+        </div>
       </div>
     );
   }

@@ -1980,6 +1980,56 @@
     animation: none;
   }
 }
+
+.loader-spin {
+  animation: spin 0.8s linear infinite;
+  color: #0d9488;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.loader-fullpage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 50vh;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.loader-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.loader-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-spin {
+    animation-duration: 1.6s;
+  }
+}
 /* duplicate .connection-status / .connection-status.offline overrides removed — canonical definitions are above */
 .referral-list-card {
   background: white;

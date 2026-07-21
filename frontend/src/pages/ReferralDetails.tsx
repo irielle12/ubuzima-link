@@ -12,6 +12,7 @@ import {
   Phone, UserCheck, AlertCircle, Activity, Stethoscope, CheckCircle, AlertTriangle, Building2, Calendar,
   Hourglass, MapPinCheck, Archive, Pencil, MessageSquare,
 } from "lucide-react";
+import Loader from "../components/Loader";
 
 // "Pending Hospital Review" alone isn't enough — that status persists for
 // the entire waiting period, so a referral the hospital already opened
@@ -85,7 +86,9 @@ function ReferralDetails() {
   if (loading) {
     return (
       <div className="patient-search-page">
-        <div className="details-card">{t("Loading referral...")}</div>
+        <div className="details-card">
+          <Loader label={t("Loading referral...")} />
+        </div>
       </div>
     );
   }

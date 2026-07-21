@@ -10,6 +10,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { passwordPolicyError, PASSWORD_HINT } from "../utils/passwordPolicy";
 import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
+import PasswordInput from "../components/PasswordInput";
 import { db } from "../services/db";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -234,8 +235,7 @@ function Profile() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
                   {t("Current Password")}
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   autoFocus
@@ -244,8 +244,7 @@ function Profile() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
                   {t("New Password")}
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder={t(PASSWORD_HINT)}
@@ -254,8 +253,7 @@ function Profile() {
                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#334155", margin: "12px 0 6px" }}>
                   {t("Confirm New Password")}
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}

@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { FileText, Clock, Building2 } from "lucide-react";
 import { getImpactStats } from "../../services/adminApi";
+import Loader from "../../components/Loader";
 
 const BRAND_BLUE = "#2563eb";
 const MUTED = "#94a3b8";
@@ -54,7 +55,7 @@ function ImpactDashboard() {
         </div>
       </div>
 
-      {loading && <div className="admin-empty-state">Loading...</div>}
+      {loading && <div className="admin-empty-state"><Loader /></div>}
       {!loading && error && <div className="admin-empty-state">{error}</div>}
 
       {!loading && !error && stats && (
