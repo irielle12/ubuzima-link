@@ -24,6 +24,7 @@ import EditReferral from "./pages/EditReferral";
 import ReferralDetails from "./pages/ReferralDetails";
 import WorkQueueList from "./pages/WorkQueueList";
 import Profile from "./pages/Profile";
+import Privacy from "./pages/Privacy";
 
  import HospitalLogin from "./pages/HospitalLogin";
  import ReceiveReferral from "./pages/ReceiveReferral";
@@ -69,6 +70,10 @@ function App() {
         <Route
           path="/force-password-change"
           element={<ForcePasswordChange />}
+        />
+        <Route
+          path="/privacy"
+          element={<Privacy />}
         />
         {/* Health worker routes — nurse role required */}
         <Route element={<RequireNurse />}>

@@ -114,6 +114,23 @@ function Landing() {
 
         </div>
 
+        <footer style={{ textAlign: "center", marginTop: 40 }}>
+          <button
+            onClick={() => navigate("/privacy")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748b",
+              fontSize: 12,
+              cursor: "pointer",
+              textDecoration: "underline",
+              padding: 0,
+            }}
+          >
+            Privacy Policy
+          </button>
+        </footer>
+
       </div>
     </div>
   );

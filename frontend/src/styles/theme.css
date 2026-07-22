@@ -217,12 +217,18 @@
   z-index: 1;
 
   width: 100%;
-  max-width: 1080px;
+  max-width: 1440px;
 
   padding: 48px 24px 32px;
 
   display: flex;
   flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .landing-shell {
+    padding: 48px 64px 32px;
+  }
 }
 
 .landing-brand {
@@ -316,12 +322,26 @@
   }
 }
 
+@media (min-width: 1280px) {
+  .landing-pitch h2 {
+    max-width: 600px;
+    font-size: 44px;
+  }
+}
+
 .landing-pitch > p {
   max-width: 460px;
 
   color: #475569;
   font-size: 15px;
   line-height: 1.6;
+}
+
+@media (min-width: 1280px) {
+  .landing-pitch > p {
+    max-width: 560px;
+    font-size: 16px;
+  }
 }
 
 .landing-features {

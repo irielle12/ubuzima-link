@@ -50,7 +50,7 @@ The system addresses a real gap in Rwanda's healthcare system where referrals be
 ### Admin Portal (Desktop Web UI)
 - Facility management (add, edit, deactivate health posts and hospitals)
 - User account management (create staff accounts, assign facilities and roles)
-- Role-based access control (admin / facility_staff / clinician)
+- Role-based access control (admin / clinician / nurse)
 
 ---
 
@@ -168,7 +168,6 @@ The system requires a database-level admin account to get started. Run this SQL 
 
 ```sql
 INSERT INTO users (
-  id,
   staff_id,
   first_name,
   last_name,
@@ -179,7 +178,6 @@ INSERT INTO users (
   active
 )
 VALUES (
-  gen_random_uuid(),
   'ADMIN001',
   'System',
   'Admin',
@@ -191,6 +189,8 @@ VALUES (
 );
 ```
 
+> `id` is an auto-incrementing `SERIAL` column — don't supply it yourself, Postgres generates it.
+
 > For the password hash, run this in Node.js to hash your chosen password:
 > ```javascript
 > const bcrypt = require('bcrypt');
@@ -199,6 +199,11 @@ VALUES (
 > Copy the output and paste it as `password_hash` in the SQL above.
 
 Once the admin user exists, log in at `http://localhost:5173/admin` to create facilities and staff accounts through the Admin Portal UI.
+
+> **Admin and clinician logins require a working `RESEND_API_KEY`.** Those two roles complete
+> sign-in with an emailed one-time code — without a Resend API key configured in `.env`,
+> login for those roles will fail with a server error. `nurse` accounts don't need this;
+> they sign in with just Staff ID + password. See [Common Issues](#common-issues) below.
 
 ---
 
@@ -313,6 +318,14 @@ ubuzima-link/
 - Make sure you created the first admin user via SQL (see above)
 - Confirm the password hash was generated correctly using bcrypt
 
+**Server error when logging in as admin or clinician**
+- These roles require a two-factor email code to complete sign-in — set `RESEND_API_KEY`
+  in `backend/.env` (sign up free at resend.com)
+- Without a verified domain in Resend, the free tier only delivers to the email address
+  your Resend account itself is registered with — verify a domain to send to any recipient
+- `nurse` accounts skip this entirely and are the fastest way to test the app without any
+  email setup
+
 **QR scanner not working**
 - The browser needs camera permission — click "Allow" when prompted
 - Must be served over HTTPS or localhost (camera API doesn't work on plain HTTP)
@@ -335,9 +348,8 @@ The application is deployed at: `https://ubuzima-link-rhew.vercel.app/`
 
 ## Future Work
 
-- SMS delivery via Africa's Talking API for feature phone users
-- Full PWA support with background sync for deeper offline capability
-- Counter-referral / return referral follow-up instructions
+- Native Background Sync API support, for retrying failed syncs without the app open
+- Automated test suite (unit + integration) and CI pipeline
 - Integration with Rwanda's national e-Ubuzima health information system
 
 ---

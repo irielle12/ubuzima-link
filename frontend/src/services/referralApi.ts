@@ -357,16 +357,6 @@ export async function getFacilityStats() {
   return data;
 }
 
-export async function rejectReferral(id: number | string, rejectionReason: string) {
-  const response = await fetch(`${API_URL}/referrals/${id}/status`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify({ workflowStatus: "Rejected", rejectionReason }),
-  });
-  const data = await safeJson(response);
-  if (!response.ok) throw new Error(data.message);
-  return data;
-}
 
 export async function submitReferralFeedback(
   id: number | string,

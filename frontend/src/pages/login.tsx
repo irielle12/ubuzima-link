@@ -204,6 +204,23 @@ function Login() {
             <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#94a3b8" }}>
               Contact your administrator if you need access
             </p>
+
+            <p style={{ textAlign: "center", marginTop: 8 }}>
+              <button
+                onClick={() => navigate("/privacy")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#94a3b8",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Privacy Policy
+              </button>
+            </p>
           </>
         )}
 

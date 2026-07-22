@@ -450,7 +450,6 @@
 .hospital-badge.arrived { background: #ede9fe; color: #5b21b6; }
 .hospital-badge.feedback { background: #fef3c7; color: #92400e; }
 .hospital-badge.closed { background: #f1f5f9; color: #475569; }
-.hospital-badge.rejected { background: #fee2e2; color: #991b1b; }
 .hospital-badge.emergency { background: #fee2e2; color: #dc2626; }
 .hospital-badge.urgent { background: #fef3c7; color: #92400e; }
 .hospital-badge.routine { background: #f1f5f9; color: #475569; }
