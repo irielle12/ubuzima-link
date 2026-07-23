@@ -41,7 +41,9 @@ function Landing() {
             <p>
               Ubuzima-Link connects health posts and district hospitals with
               offline-first referrals, instant QR handoffs, and automatic
-              sync the moment connectivity returns.
+              sync the moment connectivity returns. Nurses see hospital
+              capacity before they refer, and hospitals send outcomes
+              straight back once a case is closed.
             </p>
 
             <div className="landing-features">

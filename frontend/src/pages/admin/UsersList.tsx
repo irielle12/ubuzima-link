@@ -16,7 +16,7 @@ import {
 import Loader from "../../components/Loader";
 import PasswordInput from "../../components/PasswordInput";
 
-const ROLES = ["nurse", "clinician", "admin"];
+const ROLES = ["nurse", "doctor", "admin"];
 
 function emptyForm() {
   return {
@@ -117,10 +117,10 @@ function UsersList() {
       return;
     }
 
-    // Admin/clinician logins require an email on file to send their 2FA
+    // Admin/doctor logins require an email on file to send their 2FA
     // code to — without this check, saving one without an email creates an
     // account that can never complete its own sign-in.
-    if ((form.role === "admin" || form.role === "clinician") && !form.email) {
+    if ((form.role === "admin" || form.role === "doctor") && !form.email) {
       setFormError(`An email address is required for the ${form.role} role (used for two-factor sign-in).`);
       return;
     }
@@ -521,7 +521,7 @@ function UsersList() {
             <div className="admin-form-group">
               <label>
                 Email
-                {(form.role === "admin" || form.role === "clinician") && (
+                {(form.role === "admin" || form.role === "doctor") && (
                   <span style={{ color: "#dc2626" }}> * required for two-factor sign-in</span>
                 )}
               </label>
@@ -552,7 +552,7 @@ function UsersList() {
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
                 {ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
                 ))}
               </select>
             </div>

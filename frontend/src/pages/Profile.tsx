@@ -16,7 +16,6 @@ import { db } from "../services/db";
 const ROLE_LABELS: Record<string, string> = {
   nurse: "Nurse",
   health_worker: "Health Worker",
-  clinician: "Clinician",
   doctor: "Doctor",
   admin: "Administrator",
 };

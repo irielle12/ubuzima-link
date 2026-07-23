@@ -172,7 +172,7 @@ export async function login(
     );
   }
 
-  // Admin/clinician accounts (see OTP_REQUIRED_ROLES on the backend) get a
+  // Admin/doctor accounts (see OTP_REQUIRED_ROLES on the backend) get a
   // pre-auth token instead of real session tokens at this point — the
   // server has already emailed them a 6-digit code. The caller (the login
   // page) needs to show an "enter your code" screen and complete the flow

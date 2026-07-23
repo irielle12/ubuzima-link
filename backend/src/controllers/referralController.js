@@ -273,7 +273,7 @@ const updateReferral = async (req, res) => {
     }
 
     // workflow_status alone stays "Pending Hospital Review" for the entire
-    // waiting period, so it can't tell us whether a clinician has actually
+    // waiting period, so it can't tell us whether a doctor has actually
     // opened this referral yet — hospital_viewed_at can. Once they've seen
     // it, editing it afterward would silently change what they already saw.
     if (existing.rows[0].hospital_viewed_at) {
@@ -311,13 +311,13 @@ const updateReferral = async (req, res) => {
   }
 };
 
-// Called when a hospital clinician opens a referral's details in their
+// Called when a hospital doctor opens a referral's details in their
 // queue — the first genuine "someone at the hospital has seen this" signal,
 // which the health-post side then uses to lock further edits. Only the
-// first view counts (idempotent), and only a clinician can trigger it.
+// first view counts (idempotent), and only a doctor can trigger it.
 const markReferralViewed = async (req, res) => {
   try {
-    if (req.user?.role !== "clinician") {
+    if (req.user?.role !== "doctor") {
       return res.status(403).json({ message: "Only hospital staff can mark a referral as viewed" });
     }
 
@@ -340,13 +340,13 @@ const updateReferralStatus = async (req, res) => {
     const { id } = req.params;
     const { workflowStatus } = req.body;
 
-    /* When a hospital clinician promotes a referral (via QR scan or manual
+    /* When a hospital doctor promotes a referral (via QR scan or manual
        lookup), set destination_facility_id to their facility so the referral
        appears in their queue. Health workers calling this endpoint are nurses
        and their facilityId is the source, not the destination. */
     const isHospitalClaim =
       workflowStatus === "Pending Hospital Review" &&
-      req.user?.role === "clinician" &&
+      req.user?.role === "doctor" &&
       req.user?.facilityId;
 
     const result = await pool.query(

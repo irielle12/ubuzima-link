@@ -464,7 +464,7 @@ const changePassword = async (req, res) => {
 // Any role can use this — including nurses, who have no email requirement
 // at all (deliberately, for offline field access). If a nurse has no email
 // on file, forgotPassword below is a no-op behind an identical response;
-// they (like an admin/clinician with no email) have to go through an
+// they (like an admin/doctor with no email) have to go through an
 // administrator instead. Kept separate from the login-OTP code/columns so
 // a pending sign-in code and a pending reset code never collide.
 async function issueAndSendResetCode(user) {

@@ -7,7 +7,7 @@ async function sendEmail({ to, subject, text, html }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "RESEND_API_KEY is not configured — admin/clinician 2FA and password-reset codes can't be emailed without it."
+      "RESEND_API_KEY is not configured — admin/doctor 2FA and password-reset codes can't be emailed without it."
     );
   }
 

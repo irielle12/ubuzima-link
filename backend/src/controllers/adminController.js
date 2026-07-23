@@ -3,7 +3,7 @@ const { hashPassword } = require("../utils/hashPassword");
 const { validatePasswordStrength } = require("../utils/passwordPolicy");
 const { OTP_REQUIRED_ROLES } = require("../utils/otpPolicy");
 
-const ROLE_PREFIX = { nurse: "NURSE", clinician: "CLIN", admin: "ADMIN" };
+const ROLE_PREFIX = { nurse: "NURSE", doctor: "DOC", admin: "ADMIN" };
 
 async function generateStaffId(role) {
   const prefix = ROLE_PREFIX[role] || "STAFF";
@@ -61,7 +61,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    // Admin/clinician logins can't complete without an email on file to send
+    // Admin/doctor logins can't complete without an email on file to send
     // their 2FA code to (see authController.js) — enforcing that here means
     // an account that can never sign in never gets created in the first
     // place, rather than discovering the dead end at login time with no

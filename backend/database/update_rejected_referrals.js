@@ -65,12 +65,12 @@ async function convert(referralNumber, { arrivedByLabel, hospitalNotes }) {
 
 async function main() {
   await convert("REF-DEMO-012", {
-    arrivedByLabel: "Marked arrived by Dr. Amina Uwera (CLINIC001) at Kacyiru District Hospital",
+    arrivedByLabel: "Marked arrived by Dr. Amina Uwera (CLINIC001) at Kanombe Hospital",
     hospitalNotes: "Reviewed in outpatient clinic. Advised routine orthopedic follow-up and home exercises; no admission required.",
   });
 
   await convert("REF-DEMO-013", {
-    arrivedByLabel: "Marked arrived by Dr. Jean Bosco Nsengimana (CLIN002) at Kacyiru District Hospital",
+    arrivedByLabel: "Marked arrived by Dr. Jean Bosco Nsengimana (CLIN002) at Kanombe Hospital",
     hospitalNotes: "Assessed and managed symptomatically as an outpatient. No admission required.",
   });
 }

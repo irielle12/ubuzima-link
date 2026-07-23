@@ -73,7 +73,7 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
     setCloseNotes("");
     setPanelLoading(true);
 
-    // First genuine "a clinician has seen this" signal — the health post
+    // First genuine "a doctor has seen this" signal — the health post
     // uses it to lock further edits, since workflow_status alone stays
     // "Pending Hospital Review" for the whole waiting period.
     if (r.workflow_status === "Pending Hospital Review") {
@@ -126,7 +126,7 @@ function HospitalQueue({ scope = "active" }: { scope?: "active" | "closed" }) {
         closeNotes || undefined
       );
       await refreshAndUpdate(r);
-      showToast("Referral closed");
+      showToast("Referral closed", "info");
       setCloseNotes("");
     } catch (e: any) {
       showToast(e.message, "error");

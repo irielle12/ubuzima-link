@@ -29,7 +29,7 @@ CREATE TABLE users (
   last_name                VARCHAR NOT NULL,
   email                    VARCHAR UNIQUE,
   password_hash            TEXT    NOT NULL,
-  role                     VARCHAR NOT NULL,  -- nurse | clinician | admin
+  role                     VARCHAR NOT NULL,  -- nurse | doctor | admin
   facility_id              INTEGER REFERENCES facilities(id),
   active                   BOOLEAN DEFAULT true,
   created_by               INTEGER REFERENCES users(id),

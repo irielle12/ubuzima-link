@@ -2,7 +2,7 @@ const pool = require("../config/db");
 
 const CAPACITY_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
-// A "Limited"/"Not Accepting" setting a clinician forgets to reset would
+// A "Limited"/"Not Accepting" setting a doctor forgets to reset would
 // otherwise block referrals indefinitely — auto-expire it back to
 // "available" once it's been unchanged for longer than the grace period.
 // Read-only: this never persists the reset itself (any subsequent save

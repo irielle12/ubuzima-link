@@ -50,7 +50,7 @@ The system addresses a real gap in Rwanda's healthcare system where referrals be
 ### Admin Portal (Desktop Web UI)
 - Facility management (add, edit, deactivate health posts and hospitals)
 - User account management (create staff accounts, assign facilities and roles)
-- Role-based access control (admin / clinician / nurse)
+- Role-based access control (admin / doctor / nurse)
 
 ---
 
@@ -200,7 +200,7 @@ VALUES (
 
 Once the admin user exists, log in at `http://localhost:5173/admin` to create facilities and staff accounts through the Admin Portal UI.
 
-> **Admin and clinician logins require a working `RESEND_API_KEY`.** Those two roles complete
+> **Admin and doctor logins require a working `RESEND_API_KEY`.** Those two roles complete
 > sign-in with an emailed one-time code — without a Resend API key configured in `.env`,
 > login for those roles will fail with a server error. `nurse` accounts don't need this;
 > they sign in with just Staff ID + password. See [Common Issues](#common-issues) below.
@@ -219,11 +219,11 @@ Once the admin user exists, log in at `http://localhost:5173/admin` to create fa
 6. If **offline**: referral saves to local IndexedDB (Dexie), QR still generates from local data
 7. QR is shared to patient via **WhatsApp** or **SMS** — no printing needed
 8. Patient travels to hospital and shows QR on their phone
-9. **Hospital clinician** opens the Scan QR page, scans patient's phone screen
+9. **Hospital doctor** opens the Scan QR page, scans patient's phone screen
 10. If referral is synced: full record loads in the queue
 11. If not yet synced: QR data displays as offline referral view
-12. Clinician clicks **Mark as Arrived** when patient presents
-13. After treatment, clinician **Closes** the referral — optionally adding feedback notes
+12. Doctor clicks **Mark as Arrived** when patient presents
+13. After treatment, doctor **Closes** the referral — optionally adding feedback notes
 14. Nurse sees the closed status and any feedback on the health post side
 
 ### Offline Sync Flow
@@ -318,7 +318,7 @@ ubuzima-link/
 - Make sure you created the first admin user via SQL (see above)
 - Confirm the password hash was generated correctly using bcrypt
 
-**Server error when logging in as admin or clinician**
+**Server error when logging in as admin or doctor**
 - These roles require a two-factor email code to complete sign-in — set `RESEND_API_KEY`
   in `backend/.env` (sign up free at resend.com)
 - Without a verified domain in Resend, the free tier only delivers to the email address

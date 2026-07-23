@@ -15,19 +15,19 @@ const SECTIONS = [
     icon: Database,
     title: "What data we collect",
     body:
-      "To coordinate a referral between facilities, we collect the patient's name, gender, date of birth, phone number, and national ID (or a guardian's national ID for minors), along with the clinical details of the referral itself  chief complaint, diagnosis, vitals, and the notes a health worker or clinician records.",
+      "To coordinate a referral between facilities, we collect the patient's name, gender, date of birth, phone number, and national ID (or a guardian's national ID for minors), along with the clinical details of the referral itself — chief complaint, diagnosis, vitals, and the notes a health worker or doctor records.",
   },
   {
     icon: Target,
     title: "Why we collect it",
     body:
-      "This information exists solely to coordinate patient referrals between health posts, health centers, and district hospitals — identifying the right patient, routing the referral to the right facility, and giving clinicians the clinical context they need to provide care.",
+      "This information exists solely to coordinate patient referrals between health posts, health centers, and district hospitals — identifying the right patient, routing the referral to the right facility, and giving doctors the clinical context they need to provide care.",
   },
   {
     icon: Users,
     title: "Who can access it",
     body:
-      "Only authenticated staff — nurses, clinicians, and administrators — can access patient and referral data, and only through the facility they're assigned to. A health worker at one facility cannot see another facility's patients; a hospital only sees referrals sent to it.",
+      "Only authenticated staff — nurses, doctors, and administrators — can access patient and referral data, and only through the facility they're assigned to. A health worker at one facility cannot see another facility's patients; a hospital only sees referrals sent to it.",
   },
   {
     icon: ShieldCheck,
