@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useNotification } from "../../contexts/NotificationContext";
 import {
   getFacilities,
@@ -12,6 +13,36 @@ import {
 import Loader from "../../components/Loader";
 
 const FACILITY_TYPES = ["HEALTH_POST", "HEALTH_CENTER", "DISTRICT_HOSPITAL"];
+
+const CAPACITY_STALE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Hospitals set capacity per urgency level (Emergency/Urgent/Routine), each
+// with its own last-changed timestamp — a facility counts as stale if the
+// most recently touched urgency is still older than the grace period, or if
+// none has ever been set at all (a hospital that's never touched this screen
+// is the most likely to be forgotten, not the least).
+function getCapacityStaleness(facility: any): { stale: boolean; label: string } | null {
+  if (facility.type !== "DISTRICT_HOSPITAL") return null;
+
+  const updatedAt = facility.capacity_updated_at || {};
+  const timestamps = Object.values(updatedAt)
+    .map((v) => (v ? new Date(v as string).getTime() : NaN))
+    .filter((t) => !isNaN(t));
+
+  if (timestamps.length === 0) {
+    return { stale: true, label: "Never set" };
+  }
+
+  const mostRecent = Math.max(...timestamps);
+  const ageMs = Date.now() - mostRecent;
+
+  if (ageMs > CAPACITY_STALE_MS) {
+    const days = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+    return { stale: true, label: days >= 1 ? `${days}d ago` : "24h+ ago" };
+  }
+
+  return { stale: false, label: new Date(mostRecent).toLocaleString() };
+}
 
 function emptyForm() {
   return { name: "", type: "HEALTH_POST", district: "", sector: "", phone: "", email: "" };
@@ -152,6 +183,13 @@ function FacilitiesList() {
       return 0;
     });
 
+  // Computed off the full active list (not `filtered`) so the warning stays
+  // accurate regardless of whatever search/type filter is currently applied.
+  const staleHospitals =
+    tab === "active"
+      ? facilities.filter((f) => getCapacityStaleness(f)?.stale)
+      : [];
+
   return (
     <div>
       <div className="admin-page-header">
@@ -160,6 +198,31 @@ function FacilitiesList() {
           <p>Manage health posts, health centers, and district hospitals.</p>
         </div>
       </div>
+
+      {staleHospitals.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: 10,
+            padding: "12px 16px",
+            marginBottom: 16,
+            color: "#92400e",
+            fontSize: 13.5,
+          }}
+        >
+          <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+          <span>
+            {staleHospitals.length === 1
+              ? `${staleHospitals[0].name} hasn't updated its capacity status in over 24 hours.`
+              : `${staleHospitals.length} hospitals haven't updated their capacity status in over 24 hours.`}{" "}
+            Nurses referring to {staleHospitals.length === 1 ? "it" : "them"} may be seeing outdated availability.
+          </span>
+        </div>
+      )}
 
       {/* TABS */}
       <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
@@ -230,17 +293,53 @@ function FacilitiesList() {
                 <th onClick={() => toggleSort("type")} style={{ cursor: "pointer" }}>Type</th>
                 <th onClick={() => toggleSort("district")} style={{ cursor: "pointer" }}>District</th>
                 <th>Contact</th>
+                <th>Capacity</th>
                 <th>Created</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((f) => (
+              {filtered.map((f) => {
+                const capacity = getCapacityStaleness(f);
+                return (
                 <tr key={f.id}>
                   <td>{f.name}</td>
                   <td>{f.type?.replace(/_/g, " ")}</td>
                   <td>{f.district}{f.sector ? `, ${f.sector}` : ""}</td>
                   <td>{f.phone || f.email || "—"}</td>
+                  <td>
+                    {capacity === null ? (
+                      <span style={{ color: "#94a3b8" }}>—</span>
+                    ) : capacity.stale ? (
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          color: "#b45309",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                        }}
+                        title={`Capacity last changed: ${capacity.label}`}
+                      >
+                        <AlertTriangle size={13} /> {capacity.label}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          color: "#16a34a",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                        }}
+                        title={`Last changed: ${capacity.label}`}
+                      >
+                        <CheckCircle2 size={13} /> Up to date
+                      </span>
+                    )}
+                  </td>
                   <td style={{ color: "#64748b", fontSize: 13 }}>
                     {f.created_by_first_name
                       ? `${f.created_by_first_name} ${f.created_by_last_name}`.trim()
@@ -275,7 +374,8 @@ function FacilitiesList() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
