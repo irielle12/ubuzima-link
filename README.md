@@ -217,18 +217,18 @@ Once the admin user exists, log in at `http://localhost:5173/admin` to create fa
 4. Nurse creates a referral selects diagnosis, urgency, destination hospital
 5. If **online**: referral saves to server
 6. If **offline**: referral saves to local IndexedDB (Dexie), QR still generates from local data
-7. QR is shared to patient via **WhatsApp** or **SMS** — no printing needed
+7. QR is shared to patient no printing needed
 8. Patient travels to hospital and shows QR on their phone
 9. **Hospital doctor** opens the Scan QR page, scans patient's phone screen
 10. If referral is synced: full record loads in the queue
 11. If not yet synced: QR data displays as offline referral view
 12. Doctor clicks **Mark as Arrived** when patient presents
-13. After treatment, doctor **Closes** the referral — optionally adding feedback notes
+13. After treatment, doctor **Closes** the referral  optionally adding feedback notes
 14. Nurse sees the closed status and any feedback on the health post side
 
 ### Offline Sync Flow
 
-1. Nurse creates referrals while offline — they appear on the Sync page
+1. Nurse creates referrals while offline they appear on the Sync page
 2. Each pending referral shows a "View QR" option so the nurse can reshare if needed
 3. When connectivity returns, pending referrals sync automatically
 4. Sync page shows progress: "Syncing...", "Synced", or individual error messages
@@ -327,9 +327,9 @@ ubuzima-link/
   email setup
 
 **QR scanner not working**
-- The browser needs camera permission — click "Allow" when prompted
+- The browser needs camera permission click "Allow" when prompted
 - Must be served over HTTPS or localhost (camera API doesn't work on plain HTTP)
-- Try Chrome or Edge — best support for the Web Barcode Detection API
+- Try Chrome or Edge  best support for the Web Barcode Detection API
 
 ---
 
